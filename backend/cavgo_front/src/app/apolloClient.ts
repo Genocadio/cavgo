@@ -5,7 +5,7 @@ import { setContext } from '@apollo/client/link/context';
 const createApolloClient = () => {
   // Create an HttpLink to specify the URI of the GraphQL server
   const httpLink = new HttpLink({
-    uri: 'https://cavgo.onrender.com',
+    uri: 'https://cavgo.onrender.com/graphql',
   });
 
   // Create a middleware link to add authentication token to headers
