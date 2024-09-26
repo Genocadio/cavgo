@@ -3,6 +3,7 @@ const Trip = require('../models/Trip');
 const Route = require('../models/Route');
 const Car = require('../models/Car');
 const User = require('../models/User');
+const Location = require('../models/Location'); // Import the Location model
 
 const tripResolvers = {
   Query: {
@@ -58,10 +59,11 @@ const tripResolvers = {
   },
 
   Mutation: {
-    addTrip: async (_, { routeId, carId, boardingTime, status }, context) => {
+    addTrip: async (_, { routeId, carId, boardingTime, status, stopPoints, reverseRoute }, context) => {
       try {
         const { user } = context; // Get the user from context
-
+        console.log("adding trip");
+    
         // Ensure the user is authenticated and authorized
         if (!user) {
           return {
@@ -70,7 +72,7 @@ const tripResolvers = {
             data: null
           };
         }
-
+    
         if (user.userType !== 'admin' && user.userType !== 'company') {
           return {
             success: false,
@@ -78,11 +80,11 @@ const tripResolvers = {
             data: null
           };
         }
-
+    
         // Ensure that the route and car exist
         const route = await Route.findById(routeId);
         const car = await Car.findById(carId);
-
+    
         if (!route || !car) {
           return {
             success: false,
@@ -90,16 +92,31 @@ const tripResolvers = {
             data: null
           };
         }
-
+    
+        // Fetch locations for the stop points
+        const mappedStopPoints = await Promise.all(stopPoints.map(async (point) => {
+          const location = await Location.findById(point.locationId);
+          if (!location) {
+            throw new Error(`Location with ID ${point.locationId} not found`);
+          }
+          return {
+            location, // Full location object
+            price: point.price // Price associated with the stop point
+          };
+        }));
+    
+        // Create the trip with the populated stop points
         const trip = new Trip({
-          route: mongoose.Types.ObjectId(routeId),
-          car: mongoose.Types.ObjectId(carId),
+          route: routeId,
+          car: carId,
           boardingTime,
           status,
           user: user.id, // Use the ID from the context
-          availableSeats: car.numberOfSeats // Set available seats to the car's seat count
+          availableSeats: car.numberOfSeats, // Set available seats to the car's seat count
+          stopPoints: mappedStopPoints, // Include the mapped stop points with full location objects
+          reverseRoute
         });
-
+    
         await trip.save();
         return {
           success: true,
@@ -114,6 +131,7 @@ const tripResolvers = {
         };
       }
     },
+    
 
     deleteTrip: async (_, { id }, context) => {
       try {

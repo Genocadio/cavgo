@@ -349,7 +349,7 @@ type Trip {
   status: String!
   user: User!  # User field is retained
   availableSeats: Int!  # Available seats
-  stopPoints: [StopPointPrice]!  # Array of stop points, each with its price
+  stopPoints: [StopPointPrice]  # Array of stop points, each with its price
   reverseRoute: Boolean!  # Indicates if the route is reversible
   createdAt: String!
 }
@@ -371,7 +371,7 @@ type Mutation {
     carId: ID!,
     boardingTime: String!,
     status: String,
-    stopPoints: [StopPointPriceInput!]!,  # Updated to just take stop points with price
+    stopPoints: [StopPointPriceInput],  # Updated to just take stop points with price
     reverseRoute: Boolean
   ): TripResponse!
 
