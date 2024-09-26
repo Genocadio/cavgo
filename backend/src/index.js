@@ -3,6 +3,7 @@ const { ApolloServer } = require('apollo-server-express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const cors = require('cors');
 const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes } = require('./graphql/typeDefs');
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger'); // Ensure this is configured correctly
@@ -51,6 +52,7 @@ async function startApolloServer() {
   await server.start();
 
   const app = express();
+  app.use(cors());
 
   // Apply logging middleware
   // app.use(requestLogger);
