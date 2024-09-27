@@ -130,7 +130,7 @@ const RouteManagementPage: React.FC = () => {
         {/* Price Input */}
         <div className="form-control">
           <label htmlFor="price" className="label">
-            <span className="label-text font-semibold">Price</span>
+            <span className="label-text font-semibold">Price(RWF)</span>
           </label>
           <input
             type="number"

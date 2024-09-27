@@ -144,7 +144,7 @@ const TripFilter: React.FC = () => {
             filteredTrips.map((trip) => (
               <div key={trip.id} className="trip-item border p-4 mb-4 rounded-lg bg-base-200">
                 <p className="font-semibold">{trip.route.origin.name} - Remaining Slots: {trip.availableSeats}</p>
-                <p>Price: ${trip.route.price}</p>
+                <p>Price: {trip.route.price} RWF</p>
                 <p>Boarding Time: {formatDate(trip.boardingTime)}</p>
                 <button onClick={() => handleTripSelection(trip)} className="btn btn-secondary mt-2">Select Trip</button>
                 {selectedTrip?.id === trip.id && (

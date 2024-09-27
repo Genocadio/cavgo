@@ -122,7 +122,7 @@ const BookTrip: React.FC<BookTripProps> = ({ params }) => {
             />
           </div>
 
-          <h3 className="text-xl font-semibold text-center mt-4">Total Price: ${totalPrice}</h3>
+          <h3 className="text-xl font-semibold text-center mt-4">Total Price: {totalPrice} Rwf</h3>
           <button 
             onClick={handleBooking} 
             className="btn btn-primary w-full mt-4"
