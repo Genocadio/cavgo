@@ -209,7 +209,7 @@ export default function MapRoutes() {
         {locations.map((location) => (
           <li key={location.id}>
             {location.name}
-            <button onClick={() => handleAddStopFromLocation(location.id)}>Add as Stop</button>
+            <button className="btn btn-success" onClick={() => handleAddStopFromLocation(location.id)}>Add as Stop</button>
           </li>
         ))}
       </ul>
