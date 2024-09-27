@@ -37,7 +37,7 @@ const CarSelection: React.FC = () => {
   // Function to handle adding a trip
   const handleAddTrip = async () => {
     // Check for empty fields in Redux state
-    if (!routeId || !selectedCarId || !boardingTime || availableSeats <= 0 || stopPoints.length === 0) {
+    if (!routeId || !selectedCarId || !boardingTime || availableSeats <= 0 ) {
       const emptyFields: string[] = [];
       if (!routeId) emptyFields.push('Route ID');
       if (!selectedCarId) emptyFields.push('Car ID');

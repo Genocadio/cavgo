@@ -194,7 +194,7 @@ export default function MapRoutes() {
         onChange={(e) => setNewStop(e.target.value)}
         placeholder="Add Stop Point"
       />
-      <button onClick={handleAddStop}>Add Stop</button>
+      <button className="btn btn-success" onClick={handleAddStop}>Add Stop</button>
     </div>
 
     <div>
