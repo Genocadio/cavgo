@@ -206,7 +206,7 @@ export default function MapRoutes() {
       {loading && <p>Loading locations...</p>}
       {error && <p>Error loading locations: {errorMessage}</p>}
       <ul>
-        {locations.map((location) => (
+        {locations.slice(0, 3).map((location) => (
           <li key={location.id}>
             {location.name}
             <button className="btn btn-success" onClick={() => handleAddStopFromLocation(location.id)}>Add as Stop</button>
