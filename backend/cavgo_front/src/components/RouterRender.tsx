@@ -161,13 +161,13 @@ interface Coordinates {
         <ul>
           {routes.map((route, index) => (
             <li key={route.summary}>
-              <button btn-primary onClick={() => setRouteIndex(index)}>{route.summary}</button>
+              <button className="btn btn-active btn-link" onClick={() => setRouteIndex(index)}>{route.summary}</button>
             </li>
           ))}
         </ul>
         {/* Display the button if route data is available */}
         {selected && price && (
-          <button btn-primary onClick={() => handleButtonClick(selected.summary)}>Add Route</button>
+          <button className="btn btn-active btn-link" onClick={() => handleButtonClick(selected.summary)}>Add Route</button>
         )}
       </div>
     );
