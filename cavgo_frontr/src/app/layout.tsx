@@ -20,7 +20,7 @@ export default function RootLayout({
     <html data-theme="cupcake" lang="en">
       <body>
         <RootProvider>
-        <Navbar />
+        {/* <Navbar /> */}
           {children}
           <ToastContainer /> {/* Add ToastContainer here */}
         </RootProvider>
