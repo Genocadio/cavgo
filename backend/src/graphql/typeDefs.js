@@ -37,8 +37,13 @@ const userTypes = gql`
 
   type Query {
     getUsers: UsersResponse!
-    getUser(id: ID!): UserResponse!
+    getUser(id: ID): UserResponse!
   }
+  
+  type ChangePasswordResponse {
+  success: Boolean!
+  message: String!
+}
 
   type Mutation {
     registerUser(
@@ -53,16 +58,23 @@ const userTypes = gql`
 
     loginUser(email: String!, password: String!): AuthResponse!
 
-    updateUser(
-      firstName: String, 
-      lastName: String, 
-      email: String, 
-      phoneNumber: String, 
-      userType: String, 
-      companyId: ID  # Optional field
-    ): UserResponse!
+  updateUser(
+    id: ID, # Optional field
+    firstName: String, 
+    lastName: String, 
+    email: String, 
+    phoneNumber: String, 
+    userType: String, 
+    companyId: ID # Optional field
+  ): UserResponse!
 
     deleteUser(id: ID!): UserResponse!
+
+  changePassword(
+    currentPassword: String, 
+    newPassword: String!, 
+    userId: ID
+  ): ChangePasswordResponse!
   }
 `;
 
@@ -384,6 +396,95 @@ input StopPointPriceInput {
 }
 `;
 
+const bookingsTypes = gql`
+  type Booking {
+    id: ID!
+    user: User!
+    trip: Trip!
+    destination: String!
+    numberOfTickets: Int!
+    price: Float!
+    createdAt: String! 
+    status: String!
+  }
+
+  type BookingResponse {
+    success: Boolean!
+    message: String
+    data: Booking
+  }
+
+  type BookingsResponse {
+    success: Boolean!
+    message: String
+    data: [Booking!]! 
+  }
+
+
+  type DeleteBookingResponse {
+    success: Boolean!
+    message: String
+    data: String
+  }
+
+  type Query {
+    getBooking(id: ID!): BookingResponse!
+    getBookingsByUser(userId: ID): BookingsResponse! 
+    getBookings: BookingsResponse! 
+  }
+
+  type Mutation {
+    addBooking(
+      tripId: ID!,
+      destination: String!,
+      numberOfTickets: Int!,
+      price: Float!
+    ): BookingResponse!
+     deleteBooking(id: ID!): DeleteBookingResponse!
+    updateBookingStatus(
+      id: ID!,
+      status: String
+    ): BookingResponse!
+  }
+`;
+
+const paymentTypes = gql`
+  type Payment {
+    id: ID!
+    booking: Booking!           
+    amountPaid: Float! 
+    paymentStatus: String!    
+    car: Car!                   
+    paymentDate: String
+    name: String!         
+    user: User!               
+  }
+
+  type PaymentResponse {
+    success: Boolean!           
+    message: String 
+    data: Payment 
+  }
+
+  type PaymentsResponse {
+    success: Boolean!           
+    message: String 
+    data: [Payment!]!      
+  }
+
+  type Query {
+    getPayment(id: ID!): PaymentResponse!           
+    getPaymentsByUser: PaymentsResponse!             
+  }
+
+  type Mutation {
+    createPayment(
+      bookingId: ID!,
+      phoneNumber: String!,                          
+    ): PaymentResponse!
+  }
+`;
+
 // Basic Hello Query
 const basicQueryTypes = gql`
   type Query {
@@ -400,5 +501,7 @@ module.exports = {
   locationTypes,
   routeTypes,
   tripTypes,
-  basicQueryTypes
+  basicQueryTypes,
+  bookingsTypes,
+  paymentTypes
 };

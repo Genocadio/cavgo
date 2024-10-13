@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
-const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes } = require('./graphql/typeDefs');
+const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes } = require('./graphql/typeDefs');
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger'); // Ensure this is configured correctly
 const authenticate = require('./middlewares/authMiddleware'); // Import authentication middleware
@@ -17,7 +17,9 @@ const typeDefs = [
   locationTypes,
   routeTypes,
   tripTypes,
-  basicQueryTypes
+  basicQueryTypes,
+  bookingsTypes,
+  paymentTypes
 ];
 
 dotenv.config();
