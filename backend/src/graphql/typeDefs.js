@@ -310,7 +310,7 @@ const routeTypes = gql`
   type Route {
     id: ID!
     origin: Location!
-    destination: Location!
+    destination: Location
     googleMapsRouteId: String!
     price: Float!
     createdAt: String!
@@ -492,6 +492,60 @@ const basicQueryTypes = gql`
   }
 `;
 
+const scheduleTypes = gql`
+  type Schedule {
+    id: ID!
+    user: User!  # Reference to the User associated with the schedule
+    origin: Location!  # Reference to the origin Location
+    destination: Location!  # Reference to the destination Location
+    time: String!  # Store time as a string for easier handling (ISO 8601 format)
+    matchedRoutes: [Route]  # Array of matched Routes
+    originType: String #
+    destinationType: String
+    status: String
+    constructedRoutes: [Route]  # Array of constructed Routes
+    createdAt: String!  # Timestamp for when the schedule was created
+    updatedAt: String!  # Timestamp for when the schedule was last updated
+  }
+
+  type ScheduleResponse {
+    success: Boolean!
+    message: String
+    data: Schedule
+  }
+
+  type SchedulesResponse {
+    success: Boolean!
+    message: String
+    data: [Schedule!]!
+  }
+
+  type Query {
+    getSchedule(id: ID!): ScheduleResponse!
+    getSchedules: SchedulesResponse!
+    getUserSchedules(userId: ID): SchedulesResponse!
+  }
+
+  type Mutation {
+    createSchedule(
+      originId: ID!,
+      destinationId: ID!,
+      time: String!
+    ): ScheduleResponse!
+
+    updateSchedule(
+      id: ID!,
+      originId: ID,
+      destinationId: ID,
+      time: String
+    ): ScheduleResponse!
+
+    deleteSchedule(id: ID!): ScheduleResponse!
+  }
+`;
+
+
+
 // Combine all the types and export them
 module.exports = {
   userTypes,
@@ -503,5 +557,6 @@ module.exports = {
   tripTypes,
   basicQueryTypes,
   bookingsTypes,
-  paymentTypes
+  paymentTypes,
+  scheduleTypes,
 };
