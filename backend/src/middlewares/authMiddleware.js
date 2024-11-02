@@ -30,6 +30,7 @@ const authenticate = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, SECRET);
+    console.log(decoded);
 
     if (!decoded.id) {
       throw new Error('Token invalid');

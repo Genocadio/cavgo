@@ -537,7 +537,8 @@ const scheduleTypes = gql`
       id: ID!,
       originId: ID,
       destinationId: ID,
-      time: String
+      time: String,
+      status: String
     ): ScheduleResponse!
 
     deleteSchedule(id: ID!): ScheduleResponse!

@@ -131,7 +131,7 @@ const scheduleResolvers = {
       }
     },
 
-    updateSchedule: async (_, { id, originId, destinationId, time }, context) => {
+    updateSchedule: async (_, { id, originId, destinationId, time, status }, context) => {
       try {
         const user = context.user;
         if (!user) {
@@ -150,13 +150,14 @@ const scheduleResolvers = {
             data: null,
           };
         }
-
+    
         // Update schedule fields
-        schedule.user =  schedule.user;
-        schedule.origin = originId || schedule.origin;
-        schedule.destination = destinationId || schedule.destination;
-        schedule.time = time || schedule.time;
-
+        schedule.user = schedule.user; // Keeping the original user
+        schedule.origin = originId || schedule.origin; // Update origin if provided
+        schedule.destination = destinationId || schedule.destination; // Update destination if provided
+        schedule.time = time || schedule.time; // Update time if provided
+        schedule.status = status || schedule.status; // Update status if provided
+    
         const updatedSchedule = await schedule.save();
         return {
           success: true,
@@ -171,7 +172,7 @@ const scheduleResolvers = {
         };
       }
     },
-
+    
     deleteSchedule: async (_, { id }) => {
       try {
         const schedule = await Schedule.findByIdAndDelete(id);
