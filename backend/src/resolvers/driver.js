@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Driver = require('../models/Driver');
 const Company = require('../models/Company');
+const Car = require('../models/Car');
 
 const driverResolvers = {
   Mutation: {
@@ -12,7 +13,8 @@ const driverResolvers = {
       try {
         const driverData = { name, email, phoneNumber, type, license, password };
         if (type === 'company') {
-          driverData.company = mongoose.Types.ObjectId(companyId);
+          driverData.company = new mongoose.Types.ObjectId(companyId);
+
         }
 
         const driver = new Driver(driverData);
@@ -103,7 +105,14 @@ const driverResolvers = {
         return await Company.findById(driver.company);
       }
       return null;
+    },
+    car: async (driver) => {
+      if (driver.car) {
+        return await Car.findById(driver.car);
+      }
+      return null;
     }
+
   }
 };
 

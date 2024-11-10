@@ -11,7 +11,7 @@ const userTypes = gql`
     userType: String!
     company: Company  # Add this line
   }
-
+  
   type AuthPayload {
     token: String!
     user: User
@@ -89,8 +89,9 @@ const driverTypes = gql`
     email: String!
     phoneNumber: String!
     type: String!
-    license: String!
+    license: String
     company: Company
+    car: Car
     createdAt: String!
   }
 
@@ -348,53 +349,71 @@ const routeTypes = gql`
 // Trip-related types
 
 const tripTypes = gql`
-type StopPointPrice {
-  location: Location!  # The stop point (location)
-  price: Float!        # Price to reach this stop point
-}
+  type StopPointPrice {
+    location: Location  # The stop point (location)
+    price: Float        # Price to reach this stop point
+  }
 
-type Trip {
-  id: ID!
-  route: Route!
-  car: Car!
-  boardingTime: String!
-  status: String!
-  user: User!  # User field is retained
-  availableSeats: Int!  # Available seats
-  stopPoints: [StopPointPrice]  # Array of stop points, each with its price
-  reverseRoute: Boolean!  # Indicates if the route is reversible
-  createdAt: String!
-}
+  type Trip {
+    id: ID!
+    route: Route!
+    car: Car!
+    boardingTime: String!
+    status: String!
+    user: User!           # User field is retained
+    availableSeats: Int!  # Available seats
+    stopPoints: [StopPointPrice]  # Array of stop points, each with its price
+    reverseRoute: Boolean!  # Indicates if the route is reversible
+    createdAt: String!
+  }
 
-type TripResponse {
-  success: Boolean!
-  message: String
-  data: Trip
-}
+  type TripResponse {
+    success: Boolean!
+    message: String
+    data: Trip
+  }
 
-type Query {
-  getTrip(id: ID!): TripResponse
-  getTrips: [TripResponse!]
-}
+  type TripsResponse {
+    success: Boolean!
+    message: String
+    data: [Trip]
+  }
 
-type Mutation {
-  addTrip(
-    routeId: ID!,
-    carId: ID!,
-    boardingTime: String!,
-    status: String,
-    stopPoints: [StopPointPriceInput],  # Updated to just take stop points with price
-    reverseRoute: Boolean
-  ): TripResponse!
+  type Query {
+    getTrip(id: ID!): TripResponse
+    getTrips: TripsResponse!                # Updated to return a single response with multiple trips
+    getTripsByDriver(driverId: ID): TripsResponse!  # Returns trips by a specific driver, wrapped in a single response
+  }
 
-  deleteTrip(id: ID!): TripResponse!
-}
+  type Mutation {
+    addTrip(
+      routeId: ID!,
+      carId: ID!,
+      boardingTime: String!,
+      status: String,
+      stopPoints: [StopPointPriceInput],  # Updated to take stop points with price
+      reverseRoute: Boolean
+    ): TripResponse!
 
-input StopPointPriceInput {
-  locationId: ID!  # Reference to the location
-  price: Float!    # Price to reach this stop point
-}
+    deleteTrip(id: ID!): TripResponse!
+    updateTrip(
+      id: ID!,
+      routeId: ID,
+      carId: ID,
+      boardingTime: String,
+      status: String,
+      availableSeats: Int,
+      stopPoints: [StopPointPriceInput],  # Optional array of stop points to update
+      reverseRoute: Boolean
+    ): TripResponse!
+  }
+
+  input StopPointPriceInput {
+    locationId: ID!  # Reference to the location
+    price: Float!    # Price to reach this stop point
+  }
 `;
+
 
 const bookingsTypes = gql`
   type Booking {
@@ -406,6 +425,18 @@ const bookingsTypes = gql`
     price: Float!
     createdAt: String! 
     status: String!
+    ticket: Ticket  # Optional ticket field
+  }
+
+  type Ticket {
+    id: ID!
+    booking: Booking!
+    user: User!
+    trip: Trip!
+    qrCodeData: String!
+    nfcId: String!
+    validFrom: String!
+    validUntil: String!
   }
 
   type BookingResponse {
@@ -417,9 +448,8 @@ const bookingsTypes = gql`
   type BookingsResponse {
     success: Boolean!
     message: String
-    data: [Booking!]! 
+    data: [Booking!]
   }
-
 
   type DeleteBookingResponse {
     success: Boolean!
@@ -430,7 +460,7 @@ const bookingsTypes = gql`
   type Query {
     getBooking(id: ID!): BookingResponse!
     getBookingsByUser(userId: ID): BookingsResponse! 
-    getBookings: BookingsResponse! 
+    getBookings(tripId: ID): BookingsResponse! 
   }
 
   type Mutation {
@@ -440,13 +470,21 @@ const bookingsTypes = gql`
       numberOfTickets: Int!,
       price: Float!
     ): BookingResponse!
-     deleteBooking(id: ID!): DeleteBookingResponse!
+    deleteBooking(id: ID!): DeleteBookingResponse!
     updateBookingStatus(
       id: ID!,
       status: String
     ): BookingResponse!
   }
+  
+  type Subscription {
+    bookingAdded: Booking!
+    bookingUpdated: Booking!
+  }
 `;
+
+
+
 
 const paymentTypes = gql`
   type Payment {
@@ -544,6 +582,8 @@ const scheduleTypes = gql`
     deleteSchedule(id: ID!): ScheduleResponse!
   }
 `;
+
+
 
 
 

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // Adjust path as necessary
+const Driver = require('../models/Driver'); // Import the Driver model
 const logger = require('./logger'); // Ensure this is configured correctly
 require('dotenv').config();
 const SECRET = process.env.JWT_SECRET;
@@ -16,38 +17,43 @@ const sanitizeUser = (user) => {
 const authenticate = async (req, res, next) => {
   // Extract token from Authorization header
   const authHeader = req.headers.authorization || '';
-  // console.log('authHeader:', authHeader);
 
   // Ensure the token starts with 'Bearer ' and extract it
-  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : ''; // Use substring to remove 'Bearer ' prefix
-  
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+
   if (!token) {
     // Log the absence of a token and proceed without authentication
-    // logger.info('No token provided');
+    logger.info(`No token provided. Request Method: ${req.method}, Request URL: ${req.originalUrl}`);
     req.user = null; // Ensure request.user is set to null if no token
     return next();
   }
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    console.log(decoded);
-
+    
     if (!decoded.id) {
       throw new Error('Token invalid');
     }
 
-    const user = await User.findById(decoded.id);
+    // Try finding the user in User model first
+    let user = await User.findById(decoded.id);
+    
+    // If not found in User, try finding in Driver model
+    if (!user) {
+      user = await Driver.findById(decoded.id);
+    }
+    
     if (!user) {
       throw new Error('User not found');
     }
 
     // Sanitize and attach user object to the request
-    req.user = sanitizeUser(user); 
-    // console.log('User:', req.user);
+    console.log('User:', user);
+    req.user = sanitizeUser(user);
     next();
   } catch (err) {
     // Log the error and set user to null
-    logger.error('Authentication Error:', err.message);
+    logger.error(`Authentication Error: ${err.message}. Request Method: ${req.method}, Request URL: ${req.originalUrl}`);
     req.user = null; // Ensure request.user is set to null on authentication error
     next();
   }

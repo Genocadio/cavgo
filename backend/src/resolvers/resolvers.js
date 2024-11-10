@@ -39,6 +39,10 @@ const resolvers = {
   
   },
 
+  Subscription: {
+    ...bookingResolvers.Subscription,
+  },
+
   Driver: driverResolvers.Driver,
   Car: carResolvers.Car,
   Route: routeResolvers.Route,

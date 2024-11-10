@@ -1,7 +1,8 @@
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const Trip = require('../models/Trip');
 const Route = require('../models/Route');
 const Car = require('../models/Car');
+const Driver = require('../models/Driver');
 const User = require('../models/User');
 const Location = require('../models/Location'); // Import the Location model
 
@@ -55,7 +56,71 @@ const tripResolvers = {
           data: null
         };
       }
+    },
+    getTripsByDriver: async (_, { driverId }, context) => {
+      try {
+        const { user } = context;
+    
+        // Ensure either a driverId is provided or the user is authenticated
+        if (!driverId && !user) {
+          return {
+            success: false,
+            message: 'Unauthorized',
+            data: null,
+          };
+        }
+    
+        const id = driverId || user.id;
+    
+        // Check permission if driverId is provided and user is not admin
+        if (driverId && driverId !== user.id && user.userType !== 'admin') {
+          return {
+            success: false,
+            message: 'Permission denied',
+            data: null,
+          };
+        }
+    
+        // Fetch the driver
+        const driver = await Driver.findById(id);
+        if (!driver) {
+          return {
+            success: false,
+            message: 'Driver not found',
+            data: null,
+          };
+        }
+    
+        // Fetch cars for the driver
+        const cars = await Car.find({ driver: driver._id }).select('_id'); // Only fetch IDs
+        if (!cars.length) {
+          return {
+            success: true,
+            message: 'No trips found for this driver',
+            data: [],
+          };
+        }
+    
+        // Fetch trips for the driver's cars
+        const trips = await Trip.find({ car: { $in: cars.map(car => car._id) } })
+          .populate('route')
+          .populate('car')
+          .populate('user');
+    
+        return {
+          success: true,
+          message: 'Trips fetched successfully',
+          data: trips,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          message: err.message || 'Error fetching trips',
+          data: null,
+        };
+      }
     }
+    
   },
 
   Mutation: {
@@ -131,6 +196,41 @@ const tripResolvers = {
         };
       }
     },
+
+    updateTrip: async (_, { id, routeId, carId, boardingTime, status, availableSeats, stopPoints, reverseRoute }) => {
+      try {
+        const trip = await Trip.findById(id);
+
+        if (!trip) {
+          return {
+            success: false,
+            message: "Trip not found",
+          };
+        }
+
+        // Update the fields if provided
+        if (routeId) trip.routeId = routeId;
+        if (carId) trip.carId = carId;
+        if (boardingTime) trip.boardingTime = boardingTime;
+        if (status) trip.status = status;
+        if (availableSeats !== undefined) trip.availableSeats = availableSeats; // allow updating to 0
+        if (stopPoints) trip.stopPoints = stopPoints; // Update stop points
+        if (reverseRoute !== undefined) trip.reverseRoute = reverseRoute; // allow setting to false
+
+        const updatedTrip = await trip.save();
+
+        return {
+          success: true,
+          message: "Trip updated successfully",
+          data: updatedTrip,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: "Error updating trip: " + error.message,
+        };
+      }
+    },
     
 
     deleteTrip: async (_, { id }, context) => {
@@ -202,6 +302,7 @@ const tripResolvers = {
     }
   },
 
+
   Trip: {
     route: async (trip) => {
       if (trip.route) {
@@ -220,6 +321,17 @@ const tripResolvers = {
         return await User.findById(trip.user);
       }
       return null;
+    },
+    stopPoints: async (trip) => {
+      // Populate stopPoints with their corresponding Location data
+      const populatedStopPoints = await Promise.all(trip.stopPoints.map(async (point) => {
+        const location = await Location.findById(point.location);
+        return {
+          ...point,
+          location // Add the full location object to the point
+        };
+      }));
+      return populatedStopPoints;
     }
   }
 };

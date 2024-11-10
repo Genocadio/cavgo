@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Trip = require('../models/Trip');
 const User = require('../models/User');
+const Ticket = require('../models/Ticket');
 const { startPaymentCheckTimer} = require('../helpers/payment');
+const { PubSub } = require('graphql-subscriptions');
+const pubsub = new PubSub();
 
 
 const bookingResolvers = {
@@ -25,7 +28,8 @@ const bookingResolvers = {
         if (id) {
           booking = await Booking.findById(id)
             .populate('user')
-            .populate('trip');
+            .populate('trip')
+            .populate('tickets');
     
           if (!booking) {
             return {
@@ -49,6 +53,7 @@ const bookingResolvers = {
           booking = await Booking.find({ user: user.id })
             .populate('user')
             .populate('trip')
+            .populate('tickets')
             .sort({ createdAt: -1 }); // Optional: Sort by creation date, newest first
     
           if (!booking || booking.length === 0) {
@@ -75,34 +80,41 @@ const bookingResolvers = {
       }
     },
     
-    getBookings: async (_, __, context) => {
-        try {
+    getBookings: async (_, { tripId }, context) => {
+      try {
           // Optional: Check if user is authenticated, but we can still return all bookings
           if (!context.user) {
-            console.warn('User not authenticated, still returning all bookings.');
+              console.warn('User not authenticated, still returning all bookings.');
           }
-      
-          // Fetch all bookings
-          const bookings = await Booking.find().populate('trip');
-      
+  
+          // Define the query object
+          const query = tripId ? { trip: tripId } : {};
+  
+          // Fetch bookings with optional tripId filter
+          const bookings = await Booking.find(query).populate('trip');
+  
           return {
-            success: true,
-            message: 'All bookings fetched successfully',
-            data: bookings
+              success: true,
+              message: tripId 
+                  ? `Bookings for trip ${tripId} fetched successfully`
+                  : 'All bookings fetched successfully',
+              data: bookings
           };
-        } catch (err) {
+      } catch (err) {
           console.error('Error in getBookings:', err); // Log error
           return {
-            success: false,
-            message: err.message || 'Error fetching bookings',
-            data: null
+              success: false,
+              message: err.message || 'Error fetching bookings',
+              data: null
           };
-        }
-    },
+      }
+  },
+  
 
     getBookingsByUser: async (_, { userId }, context) => {
         try {
           // Check if user is authenticated
+          console.log('context', context);
           if (!context.user) {
             return {
               success: false,
@@ -173,6 +185,7 @@ const bookingResolvers = {
           startPaymentCheckTimer(booking._id);
       
           console.log('Booking created successfully:', booking); // Log successful booking creation
+          pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
           return {
             success: true,
             message: 'Booking created successfully',
@@ -274,6 +287,8 @@ const bookingResolvers = {
         // Save the updated booking
         await booking.save();
 
+        pubsub.publish('BOOKING_UPDATED', { bookingUpdated: booking });
+
         return {
           success: true,
           message: 'Booking status updated successfully',
@@ -288,6 +303,15 @@ const bookingResolvers = {
         };
       }
     },
+  },
+
+  Subscription: {
+    bookingAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOKING_ADDED'])
+    },
+    bookingUpdated: {
+      subscribe: () => pubsub.asyncIterator(['BOOKING_UPDATED'])
+    }
   },
 
   Booking: {
@@ -310,6 +334,17 @@ const bookingResolvers = {
         return null;
       } catch (err) {
         console.error('Error in Booking trip resolver:', err); // Log error
+        return null;
+      }
+    },
+    ticket: async (booking) => {
+      try {
+        if (booking.ticket) {
+          return await Ticket.findById(booking.ticket);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error in Booking ticket resolver:', err); // Log error
         return null;
       }
     }

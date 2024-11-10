@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Company = require('../models/Company');
+const Driver = require('../models/Driver');
 
 const userResolvers = {
   Query: {
@@ -86,19 +87,32 @@ const userResolvers = {
     // Login an existing user
     loginUser: async (_, { email, password }) => {
       try {
-        const user = await User.findOne({ email }).populate('company'); // Populate company if exists
-        if (!user) return { success: false, message: 'User not found' };
-
-        const isMatch = await user.comparePassword(password);
+        // First check in User model
+        let user = await User.findOne({ email }).populate('company'); // Populate company if exists
+        
+        if (user) {
+          const isMatch = await user.comparePassword(password);
+          if (!isMatch) return { success: false, message: 'Invalid credentials' };
+    
+          const token = user.generateToken();
+          return { success: true, data: { user, token } };
+        }
+    
+        // If not found in User model, check in Driver model
+        const driver = await Driver.findOne({ email });
+        if (!driver) return { success: false, message: 'User or Driver not found' };
+    
+        const isMatch = await driver.comparePassword(password);
         if (!isMatch) return { success: false, message: 'Invalid credentials' };
-
-        const token = user.generateToken();
-        return { success: true, data: { user, token } };
+    
+        const token = driver.generateToken();
+        return { success: true, data: { driver, token } }; // Return driver data instead of user
       } catch (err) {
         console.error('Login failed:', err);
         return { success: false, message: err.message || 'Login failed' };
       }
     },
+    
 
     // Update an existing user
     updateUser: async (_, { id, firstName, lastName, email, phoneNumber, userType, companyId }, context) => {
