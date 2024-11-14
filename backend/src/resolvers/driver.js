@@ -44,22 +44,45 @@ const driverResolvers = {
       }
     },
 
-    updateDriver: async (_, { id, name, email, phoneNumber, type, license, companyId }) => {
+    updateDriver: async (
+      _,
+      { id, name, email, phoneNumber, type, license, companyId },
+      context
+    ) => {
       try {
+        const { user } = context; // Get the user from context
+        if (!user) return { success: false, message: 'Unauthorized' };
+    
+        // If the user is not an admin, ensure they can only update their own profile
+        if (user.userType !== 'admin') {
+          // If the logged-in user's ID doesn't match the ID being updated, deny access
+          id = user.id;
+        } else {
+          // If user is admin, allow updating any user's data
+          if (!id) {
+            return { success: false, message: 'Driver ID is required' };
+          }
+        }
+    
+        // Prepare the updated data object
         const updatedData = { name, email, phoneNumber, type, license };
+        
+        // If a companyId is provided, update the reference
         if (companyId) {
           updatedData.company = mongoose.Types.ObjectId(companyId);
         }
-
+    
+        // Update the driver in the database
         const driver = await Driver.findByIdAndUpdate(id, updatedData, { new: true });
         if (!driver) return { success: false, message: 'Driver not found' };
+    
         return { success: true, data: driver };
       } catch (err) {
-        console.log('Error updating driver:', err);
-        // Return specific MongoDB error message
+        console.error('Error updating driver:', err);
         return { success: false, message: err.message || 'Error updating driver' };
       }
     },
+    
 
     deleteDriver: async (_, { id }) => {
       try {
@@ -75,8 +98,14 @@ const driverResolvers = {
   },
 
   Query: {
-    getDriver: async (_, { id }) => {
+    getDriver: async (_, { id }, context) => {
+
+
       try {
+        const { user } = context; // Get the user from context
+        if (!user) return { success: false, message: 'Unauthorized' };
+         id = user.id;
+
         const driver = await Driver.findById(id);
         if (!driver) return { success: false, message: 'Driver not found' };
         return { success: true, data: driver };

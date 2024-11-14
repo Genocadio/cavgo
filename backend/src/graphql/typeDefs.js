@@ -109,7 +109,7 @@ const driverTypes = gql`
   }
 
   type Query {
-    getDriver(id: ID!): DriverResponse
+    getDriver(id: ID): DriverResponse
     getDrivers: DriverResponse
   }
 
@@ -127,7 +127,7 @@ const driverTypes = gql`
     loginDriver(email: String!, password: String!): DriverAuthPayload!
 
     updateDriver(
-      id: ID!,
+      id: ID,
       name: String,
       email: String,
       phoneNumber: String,
@@ -478,7 +478,7 @@ const bookingsTypes = gql`
   }
   
   type Subscription {
-    bookingAdded: Booking!
+    bookingAdded(tripId: ID!): Booking!
     bookingUpdated: Booking!
   }
 `;

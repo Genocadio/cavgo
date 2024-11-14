@@ -4,7 +4,7 @@ const Trip = require('../models/Trip');
 const User = require('../models/User');
 const Ticket = require('../models/Ticket');
 const { startPaymentCheckTimer} = require('../helpers/payment');
-const { PubSub } = require('graphql-subscriptions');
+const { PubSub, withFilter } = require('graphql-subscriptions');
 const pubsub = new PubSub();
 
 
@@ -307,7 +307,17 @@ const bookingResolvers = {
 
   Subscription: {
     bookingAdded: {
-      subscribe: () => pubsub.asyncIterator(['BOOKING_ADDED'])
+      subscribe: withFilter(
+        () => pubsub.asyncIterator(['BOOKING_ADDED']),
+        (payload, variables) => {
+          const { tripId } = variables;
+          console.log('Payload:', payload);
+          const tripIdFromPayload = payload.bookingAdded.trip.toString(); // Convert ObjectId to string
+          console.log('Trip ID from payload:', tripIdFromPayload, 'variable:', variables);
+          // Check if the booking's tripId matches the provided tripId
+          return tripId === tripIdFromPayload;
+        }
+      ),
     },
     bookingUpdated: {
       subscribe: () => pubsub.asyncIterator(['BOOKING_UPDATED'])
