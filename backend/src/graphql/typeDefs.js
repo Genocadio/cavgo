@@ -107,10 +107,16 @@ const driverTypes = gql`
     message: String
     data: Driver
   }
+  
+  type DriversResponse {
+  success: Boolean!
+  message: String
+  data: [Driver!]!
+}
 
   type Query {
     getDriver(id: ID): DriverResponse
-    getDrivers: DriverResponse
+    getDrivers: DriversResponse
   }
 
   type Mutation {
@@ -134,6 +140,7 @@ const driverTypes = gql`
       type: String,
       license: String,
       companyId: ID
+      car: ID
     ): DriverResponse!
 
     deleteDriver(id: ID!): DriverResponse!
@@ -409,8 +416,8 @@ const tripTypes = gql`
   }
 
   input StopPointPriceInput {
-    locationId: ID!  # Reference to the location
-    price: Float!    # Price to reach this stop point
+    locationId: ID  # Reference to the location
+    price: Float    # Price to reach this stop point
   }
 `;
 
@@ -583,6 +590,75 @@ const scheduleTypes = gql`
   }
 `;
 
+const tripPresttypes = gql`
+  # Scalar type definitions
+  scalar DateTime
+
+  # StopPointPrice type for stop points in both Trip and TripPreset
+  type StopPointPrice {
+    location: Location!  # The stop point (location)
+    price: Float!        # Price to reach this stop point
+  }
+
+  # TripPreset type
+  type TripPreset {
+    id: ID!
+    route: Route!
+    stopPoints: [StopPointPrice!]!
+    reverseRoute: Boolean!
+    presetName: String!
+    user: User!
+    company: Company!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  # Response types
+  type TripPresetResponse {
+    success: Boolean!
+    message: String
+    data: TripPreset
+  }
+
+  type TripPresetListResponse {
+    success: Boolean!
+    message: String
+    data: [TripPreset!]
+  }
+
+  # Input types
+  input StopPointPriceInput {
+    locationId: ID!  # Reference to the location
+    price: Float!    # Price to reach this stop point
+  }
+
+
+  input UpdateTripPresetInput {
+    routeId: ID
+    stopPoints: [StopPointPriceInput!]
+    reverseRoute: Boolean
+    presetName: String
+  }
+
+  # Query type
+  type Query {
+    getTripPreset(id: ID!): TripPresetResponse!
+    getTripPresets: TripPresetListResponse!
+  }
+
+  # Mutation type
+  type Mutation {
+    addTripPreset(
+     routeId: ID!
+     stopPoints: [StopPointPriceInput!]
+     reverseRoute: Boolean
+     presetName: String! ): TripPresetResponse!
+    updateTripPreset(id: ID!, input: UpdateTripPresetInput!): TripPresetResponse!
+    deleteTripPreset(id: ID!): TripPresetResponse!
+  }
+`;
+
+
 
 
 
@@ -600,4 +676,5 @@ module.exports = {
   bookingsTypes,
   paymentTypes,
   scheduleTypes,
+  tripPresttypes,
 };

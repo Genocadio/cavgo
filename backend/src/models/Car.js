@@ -38,12 +38,21 @@ carSchema.pre('save', async function(next) {
   next();
 });
 
-// Post-save middleware to update the `car` field in the Driver model
-carSchema.post('save', async function(doc) {
-  if (doc.driver) {
-    // Update the driver's car field with the current car's id
-    await Driver.findByIdAndUpdate(doc.driver, { car: doc._id });
+// Pre-save middleware to update the `driver` field in the Car model if changed
+carSchema.pre('save', async function(next) {
+  if (this.isModified('driver')) {
+    // Clear the `car` field from any previous driver if necessary
+    const previousCar = await mongoose.model('Car').findById(this._id);
+    if (previousCar && previousCar.driver && previousCar.driver.toString() !== this.driver?.toString()) {
+      await Driver.findByIdAndUpdate(previousCar.driver, { car: null });
+    }
+
+    // Update the `car` field in the new driver
+    if (this.driver) {
+      await Driver.findByIdAndUpdate(this.driver, { car: this._id });
+    }
   }
+  next();
 });
 
 // Post-remove middleware to clear the `car` field in the Driver model if the car is deleted

@@ -46,17 +46,18 @@ const driverResolvers = {
 
     updateDriver: async (
       _,
-      { id, name, email, phoneNumber, type, license, companyId },
+      { id, name, email, phoneNumber, type, license, companyId, car },
       context
     ) => {
       try {
         const { user } = context; // Get the user from context
         if (!user) return { success: false, message: 'Unauthorized' };
+        console.log('User from update : ' + id)
     
         // If the user is not an admin, ensure they can only update their own profile
-        if (user.userType !== 'admin') {
+        if (user.userType !== 'admin' && user.userType !== 'company') {
           // If the logged-in user's ID doesn't match the ID being updated, deny access
-          id = user.id;
+          id = user._id;
         } else {
           // If user is admin, allow updating any user's data
           if (!id) {
@@ -65,13 +66,13 @@ const driverResolvers = {
         }
     
         // Prepare the updated data object
-        const updatedData = { name, email, phoneNumber, type, license };
+        const updatedData = { name, email, phoneNumber, type, license, car };
         
         // If a companyId is provided, update the reference
         if (companyId) {
           updatedData.company = mongoose.Types.ObjectId(companyId);
         }
-    
+        console.log('data ', updatedData, 'and id', id);
         // Update the driver in the database
         const driver = await Driver.findByIdAndUpdate(id, updatedData, { new: true });
         if (!driver) return { success: false, message: 'Driver not found' };
@@ -116,9 +117,27 @@ const driverResolvers = {
       }
     },
 
-    getDrivers: async () => {
+    getDrivers: async (_, __, context) => {
       try {
-        const drivers = await Driver.find();
+        const { user } = context; // Get the user from context
+        if (!user) return { success: false, message: 'Unauthorized' };
+
+        let drivers;
+
+        // If the user is an admin, fetch all drivers
+        if (user.userType === 'admin') {
+          drivers = await Driver.find();
+        } 
+        // If the user is a company, fetch only drivers under their company
+        else if (user.userType === 'company') {
+          if (!user.company) {
+            return { success: false, message: 'No company associated with this user' };
+          }
+          drivers = await Driver.find({ company: user.company });
+          console.log('drivers:', drivers);
+        } else {
+          return { success: false, message: 'Unauthorized user type' };
+        }
         return { success: true, data: drivers };
       } catch (err) {
         console.log('Error fetching drivers:', err);

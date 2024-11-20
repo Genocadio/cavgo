@@ -65,13 +65,14 @@ const userResolvers = {
 
   Mutation: {
     // Register a new user
-    registerUser: async (_, { firstName, lastName, email, phoneNumber, password }) => {
+    registerUser: async (_, { firstName, lastName, email, phoneNumber, password, companyId }) => {
       try {
         const user = new User({
           firstName,
           lastName,
           email,
           phoneNumber,
+          company: companyId,
           password
         });
 

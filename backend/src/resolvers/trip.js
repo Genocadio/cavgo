@@ -323,16 +323,28 @@ const tripResolvers = {
       return null;
     },
     stopPoints: async (trip) => {
-      // Populate stopPoints with their corresponding Location data
       const populatedStopPoints = await Promise.all(trip.stopPoints.map(async (point) => {
         const location = await Location.findById(point.location);
+    
+        if (!location) {
+          // If location doesn't exist, return null or remove the stopPoint
+          return null; // Removing the stopPoint if no matching location is found
+        }
+    
+        // Ensure price is not null
+        const stopPointPrice = point.price || 0; // Default to 0 or handle how you'd like
         return {
           ...point,
-          location // Add the full location object to the point
+          location,
+          price: stopPointPrice // Ensure price is set here
         };
       }));
-      return populatedStopPoints;
+    
+      // Filter out any stopPoints that were set to null (i.e., had no matching location)
+      return populatedStopPoints.filter(point => point !== null);
     }
+    
+    
   }
 };
 

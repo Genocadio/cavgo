@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
-const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes, scheduleTypes } = require('./graphql/typeDefs');
+const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes, scheduleTypes, tripPresttypes } = require('./graphql/typeDefs');
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger');
 const authenticate = require('./middlewares/authMiddleware');
@@ -28,7 +28,8 @@ const typeDefs = [
   basicQueryTypes,
   bookingsTypes,
   paymentTypes,
-  scheduleTypes
+  scheduleTypes,
+  tripPresttypes
 ];
 
 // Connect to MongoDB
@@ -105,7 +106,7 @@ async function startApolloServer() {
   // Start HTTP and WebSocket servers
   const PORT = process.env.PORT || 4000;
   httpServer.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPah}`);
     console.log(`📡 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);
   });
 }

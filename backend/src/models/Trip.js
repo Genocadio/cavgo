@@ -40,9 +40,10 @@ const tripSchema = new mongoose.Schema({
     },
     price: { 
       type: Number, 
-      required: true 
+      default: 0 // Ensure price defaults to 0
     }
   }],
+  
   reverseRoute: { 
     type: Boolean, 
     default: false 

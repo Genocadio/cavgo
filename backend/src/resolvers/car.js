@@ -52,7 +52,7 @@ const carResolvers = {
           cars = await Car.find().populate('user'); // Populate user field
         } else if (user.userType === 'company') {
           // Company users can only fetch cars belonging to their company
-          cars = await Car.find({ ownerCompany: user.companyId }).populate('user'); // Populate user field
+          cars = await Car.find({ ownerCompany: user.company }).populate('user'); // Populate user field
         } else {
           return { success: false, message: 'Permission denied' };
         }
@@ -86,13 +86,7 @@ const carResolvers = {
           }
         } else if (user.userType === 'company') {
           // Company can only register cars with the ownerCompany set to their own company
-          if (ownerCompanyId) {
-            if (ownerCompanyId !== user.companyId) {
-              return { success: false, message: 'Company can only register cars under its own company' };
-            }
-          } else {
-            return { success: false, message: 'Owner company must be provided for company users' };
-          }
+          ownerCompanyId = user.company
         } else {
           return { success: false, message: 'Unauthorized user type' };
         }
@@ -122,25 +116,73 @@ const carResolvers = {
         return { success: false, message: err.message || 'Error registering car' };
       }
     },
-    updateCar: async (_, { id, plateNumber, numberOfSeats, ownerCompanyId, privateOwner, driverId, isOccupied }) => {
+    updateCar: async (
+      _,
+      { id, plateNumber, numberOfSeats, ownerCompanyId, privateOwner, driverId, isOccupied },
+      context
+    ) => {
       try {
-        const car = await Car.findById(id);
+        const { user } = context; // Get the user from context
+        if (!user) return { success: false, message: 'Unauthorized' };
+    
+        // If the user is not an admin, ensure they can only update cars they own
+        if (user.userType !== 'admin' && user.userType !== 'company') {
+          // If the logged-in user's company doesn't match the car's company, deny access
+          const car = await Car.findById(id);
+          if (!car) return { success: false, message: 'Car not found' };
+          if (!user.company.equals(car.ownerCompany)) {
+            return { success: false, message: 'Permission denied' };
+          }
+        } else {
+          // If the user is an admin, allow updating any car
+          if (!id) {
+            return { success: false, message: 'Car ID is required' };
+          }
+        }
+    
+        // Prepare the updated data object
+        const updatedData = { plateNumber, numberOfSeats, privateOwner, isOccupied };
+        
+        // If an ownerCompanyId is provided, update the reference
+        if (ownerCompanyId) {
+          updatedData.ownerCompany = mongoose.Types.ObjectId(ownerCompanyId);
+        }
+    
+        // Handle the driverId logic separately to avoid circular dependencies
+        if (driverId) {
+          const driver = await Driver.findById(driverId);
+          if (!driver) {
+            return { success: false, message: 'Driver not found' };
+          }
+    
+          // Check if the driver is already assigned to another car
+          const existingCarWithDriver = await Car.findOne({ driver: driverId });
+          if (existingCarWithDriver && existingCarWithDriver.id !== id) {
+            // Remove the driver from the other car
+            await Car.findByIdAndUpdate(existingCarWithDriver.id, { driver: null });
+    
+            // Optionally, update the driver's car field (if needed)
+            await Driver.findByIdAndUpdate(driverId, { car: null });
+          }
+    
+          // Update the car's driver field
+          updatedData.driver = driverId;
+          // Update the driver's car field to the new car
+          await Driver.findByIdAndUpdate(driverId, { car: id });
+        }
+    
+        // Update the car in the database
+        const car = await Car.findByIdAndUpdate(id, updatedData, { new: true });
         if (!car) return { success: false, message: 'Car not found' };
-
-        if (plateNumber) car.plateNumber = plateNumber;
-        if (numberOfSeats) car.numberOfSeats = numberOfSeats;
-        if (isOccupied !== undefined) car.isOccupied = isOccupied;
-        if (ownerCompanyId) car.ownerCompany = new mongoose.Types.ObjectId(ownerCompanyId); // Use `new` to instantiate ObjectId
-        if (privateOwner) car.privateOwner = privateOwner;
-        if (driverId) car.driver = new mongoose.Types.ObjectId(driverId); // Use `new` to instantiate ObjectId
-
-        await car.save();
+    
         return { success: true, data: car };
       } catch (err) {
         console.error('Error updating car:', err);
         return { success: false, message: err.message || 'Error updating car' };
       }
     },
+    
+    
 
     deleteCar: async (_, { id }) => {
       try {

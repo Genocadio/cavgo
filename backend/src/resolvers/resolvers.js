@@ -8,6 +8,7 @@ const tripResolvers = require('./trip');
 const bookingResolvers = require('./Booking');
 const paymentResolvers = require('./payments');
 const scheduleResolvers = require('./scheduleResolvers');
+const tripPresetResolvers = require('./tripPresetResolvers');
 
 const resolvers = {
   Query: {
@@ -21,6 +22,7 @@ const resolvers = {
     ...bookingResolvers.Query,
     ...paymentResolvers.Query,
     ...scheduleResolvers.Query,
+    ...tripPresetResolvers.Query,
 
 
   },
@@ -36,6 +38,7 @@ const resolvers = {
     ...bookingResolvers.Mutation,
     ...paymentResolvers.Mutation,
     ...scheduleResolvers.Mutation,
+    ...tripPresetResolvers.Mutation,
   
   },
 
