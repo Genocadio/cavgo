@@ -96,6 +96,7 @@ const userResolvers = {
           if (!isMatch) return { success: false, message: 'Invalid credentials' };
     
           const token = user.generateToken();
+          
           return { success: true, data: { user, token } };
         }
     

@@ -11,7 +11,7 @@ const locationResolvers = {
           return { success: false, message: 'Unauthorized', data: null };
         }
 
-        if (user.userType !== 'admin') {
+        if (user.userType !== 'admin' && user.userType !== 'company') {
           return { success: false, message: 'Permission denied', data: null };
         }
 
@@ -34,7 +34,7 @@ const locationResolvers = {
           return { success: false, message: 'Unauthorized', data: [] };
         }
 
-        if (user.userType !== 'admin') {
+        if (user.userType !== 'admin' && user.userType !== 'company') {
           return { success: false, message: 'Permission denied', data: [] };
         }
 
@@ -58,7 +58,7 @@ const locationResolvers = {
           return { success: false, message: 'Unauthorized', data: null };
         }
 
-        if (user.userType !== 'admin') {
+        if (user.userType !== 'admin' && user.userType !== 'company') {
           return { success: false, message: 'Permission denied', data: null };
         }
 

@@ -149,6 +149,7 @@ const tripResolvers = {
         // Ensure that the route and car exist
         const route = await Route.findById(routeId);
         const car = await Car.findById(carId);
+        
     
         if (!route || !car) {
           return {
@@ -156,6 +157,17 @@ const tripResolvers = {
             message: 'Route or Car not found',
             data: null
           };
+        }
+
+        if (car.isOccupied) {
+          return {
+            success: false,
+            message: 'Car is occupied',
+            data: null
+          };
+        } else {
+          car.isOccupied = true;
+          await car.save();
         }
     
         // Fetch locations for the stop points
