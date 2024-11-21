@@ -90,6 +90,7 @@ async function startApolloServer() {
   // Apply Apollo middleware to Express
   app.use(cors());
   app.use(requestLogger);
+
   app.use(authenticate);
   app.use(express.json());
   app.use('/graphql', expressMiddleware(server, {
@@ -99,6 +100,13 @@ async function startApolloServer() {
       };
     }
   }));
+
+  app.get('/', (req, res) => {
+    res.status(200).send({
+      message: 'Cannot GET /',
+    });
+  });
+
 
   // Error handling middleware
   app.use(errorLogger);
