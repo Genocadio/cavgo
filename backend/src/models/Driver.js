@@ -61,7 +61,7 @@ driverSchema.methods.comparePassword = function(candidatePassword) {
 };
 
 driverSchema.methods.generateToken = function() {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '1m' });
 };
 
 // Transform the `_id` to `id`

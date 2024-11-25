@@ -658,6 +658,52 @@ const tripPresttypes = gql`
   }
 `;
 
+const posMachineTypes = gql`
+  type PosMachine {
+    id: ID!
+    serialNumber: String!
+    status: String!
+    linkedCar: Car
+    assignedDate: String
+    lastActivityDate: String
+    user: User!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type PosMachineResponse {
+    success: Boolean!
+    message: String
+    data: PosMachine
+  }
+
+  type PosMachineListResponse {
+    success: Boolean!
+    message: String
+    data: [PosMachine!]
+  }
+
+  type Query {
+    getPosMachine(id: ID!): PosMachineResponse!
+    getPosMachines: PosMachineListResponse!
+  }
+
+  type Mutation {
+    registerPosMachine(
+      serialNumber: String!,
+      carPlate: String!,
+    ): PosMachineResponse!
+
+    updatePosMachine(
+      serialNumber: String,
+      status: String,
+      plateNumber: String,
+    ): PosMachineResponse!
+
+    deletePosMachine(id: ID!): PosMachineResponse!
+  }
+`;
+
 
 
 
@@ -677,4 +723,5 @@ module.exports = {
   paymentTypes,
   scheduleTypes,
   tripPresttypes,
+  posMachineTypes,
 };
