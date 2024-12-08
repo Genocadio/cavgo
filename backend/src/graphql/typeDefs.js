@@ -704,7 +704,57 @@ const posMachineTypes = gql`
   }
 `;
 
+const cardTypes = gql`
+  type Card {
+    id: ID!
+    nfcId: String!
+    user: User!
+    creator: User!
+    createdAt: String!
+    cardId: String!
+  }
 
+  type CardResponse {
+    success: Boolean!
+    message: String
+    data: Card
+  }
+
+  type CardsResponse {
+    success: Boolean!
+    message: String
+    data: [Card!]!
+  }
+
+  type Query {
+    # Fetch all cards (admin only)
+    getCards: CardsResponse!
+
+    # Fetch a single card by its ID
+    getCard(id: ID!): CardResponse!
+  }
+
+  type Mutation {
+    # Create a new card
+    createCard(
+      nfcId: String!,
+      email: String!,
+      phone: String!,
+      firstName: String!,
+      lastName: String!
+    ): CardResponse!
+
+    # Update an existing card
+    updateCard(
+      id: ID!,
+      nfcId: String,
+      userId: ID
+    ): CardResponse!
+
+    # Delete a card
+    deleteCard(id: ID!): CardResponse!
+  }
+`;
 
 
 
@@ -724,4 +774,5 @@ module.exports = {
   scheduleTypes,
   tripPresttypes,
   posMachineTypes,
+  cardTypes
 };
