@@ -430,6 +430,7 @@ const bookingsTypes = gql`
     destination: String!
     numberOfTickets: Int!
     price: Float!
+    card: Card
     createdAt: String! 
     status: String!
     ticket: Ticket  # Optional ticket field
@@ -476,6 +477,7 @@ const bookingsTypes = gql`
       destination: String!,
       numberOfTickets: Int!,
       price: Float!
+      nfcId: String
     ): BookingResponse!
     deleteBooking(id: ID!): DeleteBookingResponse!
     updateBookingStatus(
@@ -738,10 +740,10 @@ const cardTypes = gql`
     # Create a new card
     createCard(
       nfcId: String!,
-      email: String!,
-      phone: String!,
-      firstName: String!,
-      lastName: String!
+      email: String,
+      phone: String,
+      firstName: String,
+      lastName: String
     ): CardResponse!
 
     # Update an existing card

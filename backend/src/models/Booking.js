@@ -26,6 +26,10 @@ const bookingSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  card: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Card',
+  },
   status: {
     type: String,
     enum: ['Pending', 'Confirmed', 'Cancelled', 'Expired', 'Boarded', 'Waiting Board', 'Late'],

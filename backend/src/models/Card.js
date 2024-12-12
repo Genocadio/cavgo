@@ -1,5 +1,6 @@
 // models/Card.js
 const mongoose = require('mongoose');
+const { generateValidID } = require('../helpers/generateId')
 
 const cardSchema = new mongoose.Schema({
   nfcId: { type: String, required: true }, // Unique identifier for the NFC card
@@ -14,7 +15,7 @@ const cardSchema = new mongoose.Schema({
 cardSchema.pre('save', function(next) {
   if (!this.cardId) {
     // Generate a unique cardId using a custom logic
-    this.cardId = `CARD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    this.cardId = generateValidID();
   }
   next();
 });

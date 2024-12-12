@@ -149,10 +149,26 @@ const bookingResolvers = {
   },
 
   Mutation: {
-    addBooking: async (_, { tripId, destination, numberOfTickets, price }, context) => {
-        try {
+    addBooking: async (_, { tripId, destination, numberOfTickets, price, nfcId }, context) => {
+      try {
+        let userId;
+        
+        if (nfcId) {
+          // If NFC ID is provided, get the user associated with the card
+          const card = await Card.findOne({ nfcId });
+          if (!card) {
+            console.log('Card not found with NFC ID:', nfcId); // Log when NFC card is not found
+            return {
+              success: false,
+              message: 'Card not found',
+              data: null
+            };
+          }
+          // The user associated with the NFC card is the owner
+          userId = card.user;
+        } else {
+          // If NFC ID is not provided, use the user from context
           const { user } = context;
-      
           if (!user) {
             console.log('User not found in context'); // Log when user is not authorized
             return {
@@ -161,45 +177,48 @@ const bookingResolvers = {
               data: null
             };
           }
-      
-          console.log('Finding trip with ID:', tripId);
-          const trip = await Trip.findById(tripId);
-          if (!trip) {
-            console.log('Trip not found:', tripId); // Log when trip is not found
-            return {
-              success: false,
-              message: 'Trip not found',
-              data: null
-            };
-          }
-      
-          const booking = new Booking({
-            user: user.id,
-            trip: trip._id,
-            destination,
-            numberOfTickets,
-            price
-          });
-      
-          await booking.save();
-          startPaymentCheckTimer(booking._id);
-      
-          console.log('Booking created successfully:', booking); // Log successful booking creation
-          pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
-          return {
-            success: true,
-            message: 'Booking created successfully',
-            data: booking
-          };
-        } catch (err) {
-          console.error('Error in addBooking:', err); // Log error
+          userId = user.id;
+        }
+    
+        console.log('Finding trip with ID:', tripId);
+        const trip = await Trip.findById(tripId);
+        if (!trip) {
+          console.log('Trip not found:', tripId); // Log when trip is not found
           return {
             success: false,
-            message: err.message || 'Error creating booking',
+            message: 'Trip not found',
             data: null
           };
         }
-      },
+    
+        const booking = new Booking({
+          user: userId, // Use the user ID obtained from context or NFC card
+          trip: trip._id,
+          destination,
+          numberOfTickets,
+          card: nfcId ? card._id : null,
+          price
+        });
+    
+        await booking.save();
+        startPaymentCheckTimer(booking._id);
+    
+        console.log('Booking created successfully:', booking); // Log successful booking creation
+        pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
+        return {
+          success: true,
+          message: 'Booking created successfully',
+          data: booking
+        };
+      } catch (err) {
+        console.error('Error in addBooking:', err); // Log error
+        return {
+          success: false,
+          message: err.message || 'Error creating booking',
+          data: null
+        };
+      }
+    },    
       
     deleteBooking: async (_, { id }, context) => {
       try {
