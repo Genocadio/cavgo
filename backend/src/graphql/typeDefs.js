@@ -714,6 +714,7 @@ const cardTypes = gql`
     creator: User!
     createdAt: String!
     cardId: String!
+    active: Boolean!
   }
 
   type CardResponse {

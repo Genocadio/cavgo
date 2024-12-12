@@ -58,52 +58,63 @@ const cardResolvers = {
     createCard: async (_, { nfcId, email, phone, firstName, lastName }, context) => {
       try {
         const { user } = context;
-
+    
         // Ensure the user is authenticated
         if (!user) {
           return { success: false, message: 'Unauthorized' };
         }
-
+    
         // Only admins can create new cards
         if (user.userType !== 'admin') {
           return { success: false, message: 'Permission denied' };
         }
-
-        // Check if a user with the provided email or phone exists
-        let existingUser = await User.findOne({
-          $or: [{ email }, { phoneNumber: phone }],
-        });
-        console.log(existingUser);
-        // If no user exists, create a new user with default password
-        if (!existingUser) {
-          const newUser = new User({
-            firstName,
-            lastName,
-            email,
-            phoneNumber: phone,
-            password: 'test1223', // Default password
-            userType: 'customer', // Default user type
+    
+        let userId = null;
+    
+        // Check if email or phone is provided
+        if (email || phone) {
+          // Search for an existing user by email or phone
+          let existingUser = await User.findOne({
+            $or: [{ email }, { phoneNumber: phone }],
           });
-
-          existingUser = await newUser.save();
+    
+          // If no user exists, create a new user with the provided details
+          if (!existingUser && firstName && lastName && phone) {
+            const newUser = new User({
+              firstName,
+              lastName,
+              email: email || null, // Email can be null if not provided
+              phoneNumber: phone,
+              password: 'test1223', // Default password
+              userType: 'customer', // Default user type
+            });
+    
+            existingUser = await newUser.save();
+          }
+    
+          // Assign user ID if a user is found or created
+          if (existingUser) {
+            userId = existingUser.id;
+          }
         }
-
-        // Create a new card and assign the user's ID to it
+    
+        // Create a new card with the user's ID (if available)
         const card = new Card({
           nfcId,
-          user: existingUser.id,
+          user: userId, // Assign the user ID or null if no user
           creator: user.id, // Assign the current user as the creator
         });
-        console.log('Created card:', card);
-
+    
+        // Save the card to the database
         await card.save();
-        console.log('Card saved:', card);
+    
         return { success: true, message: 'Card created successfully', data: card };
       } catch (err) {
         console.error('Error creating card:', err);
         return { success: false, message: err.message || 'Error creating card' };
       }
     },
+    
   
 
     // Update an existing card
