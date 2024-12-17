@@ -678,6 +678,7 @@ const posMachineTypes = gql`
     message: String
     data: PosMachine
     token: String
+    refreshToken: String
   }
 
   type PosMachineListResponse {
@@ -705,11 +706,7 @@ const posMachineTypes = gql`
     ): PosMachineResponse!
 
     deletePosMachine(id: ID!): PosMachineResponse!
-    regeneratePosToken(
-      serialNumber: String!,
-      password: String!,
-      carPlate: String!
-    ): PosMachineResponse!
+    regeneratePosToken(refreshToken: String!): PosMachineResponse!
     
   }
 `;

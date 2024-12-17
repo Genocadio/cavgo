@@ -41,9 +41,24 @@ posMachineSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Method to generate a JWT token for the POS machine
 posMachineSchema.methods.generateToken = function() {
-  // Generate a token with the POS machine ID and an expiration time
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '7h' });
+  // Generate the access token with a short expiration time (e.g., 1 hour)
+  const accessToken = jwt.sign(
+    { id: this._id }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '1h' } // Access token expires in 1 hour
+  );
+
+  // Generate the refresh token with a long expiration time (e.g., 30 days)
+  const refreshToken = jwt.sign(
+    { id: this._id }, 
+    process.env.JWT_REFRESH_SECRET, // Use a separate secret for refresh token
+    { expiresIn: '30d' } // Refresh token expires in 30 days
+  );
+
+  // Return both tokens
+  return { accessToken, refreshToken };
 };
+
 
 // Transform the `_id` to `id` in JSON output
 posMachineSchema.set('toJSON', {

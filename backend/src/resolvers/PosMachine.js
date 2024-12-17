@@ -2,6 +2,7 @@ const PosMachine = require('../models/PosMachine'); // Import the POS model
 const Car = require('../models/Car');              // Import the Car model
 const User = require('../models/User');            // Import the User model
 const { isNullableType } = require('graphql');
+const jwt = require('jsonwebtoken'); 
 
 
 const posResolvers = {
@@ -113,7 +114,7 @@ const posResolvers = {
         });
     
         await newPosMachine.save();
-        const token = newPosMachine.generateToken();
+        const { accessToken, refreshToken } = newPosMachine.generateToken();
     
         // Populate linked fields before returning
         const populatedPosMachine = await PosMachine.findById(newPosMachine.id)
@@ -124,7 +125,8 @@ const posResolvers = {
           success: true,
           message: 'POS machine registered successfully',
           data: populatedPosMachine,
-          token,
+          token: accessToken,
+          refreshToken,
         };
       } catch (error) {
         return {
@@ -136,55 +138,42 @@ const posResolvers = {
     },
 
 
-    regeneratePosToken: async (_, { plateNumber, password, serialNumber }) => {
+    regeneratePosToken: async (_, { refreshToken }) => {
       try {
-        // Step 1: Find the POS machine by serial number and populate the linked car
-        const posMachine = await PosMachine.findOne({ serialNumber }).populate('linkedCar');
+        // Step 1: Verify the refresh token (decode it)
+        const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        
+        // Step 2: Find the POS machine by ID from the decoded token
+        const posMachine = await PosMachine.findById(decodedToken.id).populate('linkedCar');
         
         if (!posMachine) {
           return {
             success: false,
-            message: 'POS machine with the provided serial number not found',
+            message: 'POS machine not found for the provided refresh token',
             data: null,
           };
         }
-  
-        // Step 2: Validate that the plate number matches the linked car's plate number
-        if (posMachine.linkedCar.plateNumber !== plateNumber) {
-          return {
-            success: false,
-            message: 'The provided plate number does not match the linked car for this POS machine',
-            data: null,
-          };
-        }
-  
-        // Step 3: Compare the provided password with the stored hashed password
-        const isPasswordValid = await posMachine.comparePassword(password);
-        if (!isPasswordValid) {
-          return {
-            success: false,
-            message: 'Invalid password',
-            data: null,
-          };
-        }
-  
-        // Step 4: Generate a new token for the POS machine
-        const newToken = posMachine.generateToken();
-  
+    
+        // Step 3: Generate new access token and refresh token
+        const newTokens = posMachine.generateToken(); // Returns both accessToken and refreshToken
+    
+        // Step 4: Return both tokens in the response
         return {
           success: true,
-          message: 'New token generated successfully',
-          data: isNullableType,
-          token: newToken,
+          message: 'Tokens regenerated successfully',
+          data: null, // You can populate this with any data you'd like to return
+          token : newTokens.accessToken,
+          refreshToken: newTokens.refreshToken
         };
       } catch (error) {
         return {
           success: false,
-          message: `Error generating new token: ${error.message}`,
+          message: `Error regenerating tokens: ${error.message}`,
           data: null,
         };
       }
     },
+    
 
     // Update an existing POS Machine
     updatePosMachine: async (
