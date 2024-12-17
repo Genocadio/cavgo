@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken for token generation
 
 const posMachineSchema = new mongoose.Schema({
   serialNumber: { type: String, required: true, unique: true }, // Unique ID for the POS
@@ -6,12 +8,44 @@ const posMachineSchema = new mongoose.Schema({
   linkedCar: { type: mongoose.Schema.Types.ObjectId, ref: 'Car' }, // Reference to the Car model
   assignedDate: { type: Date }, // Date the POS was assigned to a car
   lastActivityDate: { type: Date }, // For tracking usage or last operation
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, //
+  password: { type: String, required: true }, // Password for the POS machine
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to the User who owns the POS machine
 }, {
   timestamps: true, // Automatically add createdAt and updatedAt fields
 });
 
-// Transform the `_id` to `id`
+// Password hashing middleware
+posMachineSchema.pre('save', async function (next) {
+  // Only hash the password if it's new or modified
+  if (this.isModified('password')) {
+    try {
+      const salt = await bcrypt.genSalt(10); // Generate salt for bcrypt
+      this.password = await bcrypt.hash(this.password, salt); // Hash the password
+      next(); // Proceed to save the POS machine
+    } catch (error) {
+      next(error); // Pass the error to the next middleware
+    }
+  } else {
+    next(); // Proceed if the password hasn't changed
+  }
+});
+
+// Method to compare a plain text password with the hashed password
+posMachineSchema.methods.comparePassword = async function (candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password); // Compare passwords
+  } catch (error) {
+    throw new Error('Password comparison failed');
+  }
+};
+
+// Method to generate a JWT token for the POS machine
+posMachineSchema.methods.generateToken = function() {
+  // Generate a token with the POS machine ID and an expiration time
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '7h' });
+};
+
+// Transform the `_id` to `id` in JSON output
 posMachineSchema.set('toJSON', {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString();
