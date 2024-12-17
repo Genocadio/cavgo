@@ -101,7 +101,7 @@ const posResolvers = {
         }
     
         
-        const token = PosMachine.generateToken();
+       
     
         const newPosMachine = new PosMachine({
           serialNumber,
@@ -113,6 +113,7 @@ const posResolvers = {
         });
     
         await newPosMachine.save();
+        const token = newPosMachine.generateToken();
     
         // Populate linked fields before returning
         const populatedPosMachine = await PosMachine.findById(newPosMachine.id)

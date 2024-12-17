@@ -695,6 +695,7 @@ const posMachineTypes = gql`
     registerPosMachine(
       serialNumber: String!,
       carPlate: String!,
+      password: String!,
     ): PosMachineResponse!
 
     updatePosMachine(
