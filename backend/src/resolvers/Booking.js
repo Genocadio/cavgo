@@ -6,7 +6,8 @@ const Ticket = require('../models/Ticket');
 const { startPaymentCheckTimer} = require('../helpers/payment');
 const { PubSub, withFilter } = require('graphql-subscriptions');
 const pubsub = new PubSub();
-
+const Card = require('../models/Card');
+const Wallet = require('../models/Wallet');
 
 const bookingResolvers = {
   Query: {
@@ -152,10 +153,11 @@ const bookingResolvers = {
     addBooking: async (_, { tripId, destination, numberOfTickets, price, nfcId }, context) => {
       try {
         let userId;
-        
+        let card = null
+        const { user } = context;
         if (nfcId) {
           // If NFC ID is provided, get the user associated with the card
-          const card = await Card.findOne({ nfcId });
+          card = await Card.findOne({ nfcId });
           if (!card) {
             console.log('Card not found with NFC ID:', nfcId); // Log when NFC card is not found
             return {
@@ -168,7 +170,7 @@ const bookingResolvers = {
           userId = card.user;
         } else {
           // If NFC ID is not provided, use the user from context
-          const { user } = context;
+          
           if (!user) {
             console.log('User not found in context'); // Log when user is not authorized
             return {
@@ -201,6 +203,35 @@ const bookingResolvers = {
         });
     
         await booking.save();
+        let paycard = null
+        if(nfcId) {
+          paycard =  card._id
+
+        }
+        if (user && !nfcId) {
+          paycard = user.defaultCard
+        }
+        const wallet =  paycard ? await Wallet.findOne( {card: paycard}) : null;
+
+        const Transaction = {
+          type:"debit",
+          amount: price,
+          description: "Payment for booking by default card",
+        }
+
+        if (Transaction.type === 'debit'  && wallet.balance >= amount.price && wallet !== null) {
+          wallet.balance += Transaction.type === 'debit' ? -amount : amount
+          wallet.transactions.push(Transaction)
+          pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
+          return {
+            success: true,
+            message: 'booking created successfully',
+            data: booking
+          };
+
+        }
+
+
         startPaymentCheckTimer(booking._id);
     
         console.log('Booking created successfully:', booking); // Log successful booking creation
@@ -218,7 +249,7 @@ const bookingResolvers = {
           data: null
         };
       }
-    },    
+    } ,   
       
     deleteBooking: async (_, { id }, context) => {
       try {

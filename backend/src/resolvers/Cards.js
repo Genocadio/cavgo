@@ -1,5 +1,6 @@
 const Card = require('../models/Card');
 const User = require('../models/User');
+const Wallet = require('../models/Wallet');
 
 const cardResolvers = {
   Query: {
@@ -175,14 +176,21 @@ const cardResolvers = {
       }
     },
   },
-   Card: { 
+  Card: { 
     user: async (parent) => {
+      if (!parent.user) return null; // If user is null, return null instead of querying the database
       return await User.findById(parent.user);
     },
     creator: async (parent) => {
+      if (!parent.creator) return null; // If creator is null, return null
       return await User.findById(parent.creator);
     },
-   }
+    wallet: async (parent) => {
+      if (!parent.wallet) return null; // If no wallet, return nul
+      return await Wallet.findById(parent.wallet)
+    },
+  }
+  
 };
 
 

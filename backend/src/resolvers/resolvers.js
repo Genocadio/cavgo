@@ -11,6 +11,7 @@ const scheduleResolvers = require('./scheduleResolvers');
 const tripPresetResolvers = require('./tripPresetResolvers');
 const posResolvers = require('./PosMachine');
 const cardResolvers = require('./Cards');
+const walletResolvers = require('./wallet');
 
 const resolvers = {
   Query: {
@@ -27,6 +28,7 @@ const resolvers = {
     ...tripPresetResolvers.Query,
     ...posResolvers.Query,
     ...cardResolvers.Query,
+    ...walletResolvers.Query,
     
 
   },
@@ -45,6 +47,7 @@ const resolvers = {
     ...tripPresetResolvers.Mutation,
     ...posResolvers.Mutation,
     ...cardResolvers.Mutation,
+    ...walletResolvers.Mutation,
   
   },
 
@@ -60,6 +63,8 @@ const resolvers = {
   Payment: paymentResolvers.Payment,
   Schedule: scheduleResolvers.Schedule,
   Card: cardResolvers.Card,
+  Wallet: walletResolvers.Wallet,
+  User: userResolvers.User,
   
 
 };

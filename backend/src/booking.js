@@ -10,7 +10,7 @@ mongoose.connect('mongodb+srv://Cadioyves:Cadio@cavgotest.9yini.mongodb.net/?ret
 async function generateTicketsForConfirmedBookings() {
   try {
     // Find bookings with "Confirmed" status and no ticket assigned
-    const confirmedBookings = await Booking.find({ status: 'Expired', ticket: { $exists: false } });
+    const confirmedBookings = await Booking.find({ status: 'Pending', ticket: { $exists: false } });
 
     console.log(`Found ${confirmedBookings.length} confirmed bookings without tickets.`);
 

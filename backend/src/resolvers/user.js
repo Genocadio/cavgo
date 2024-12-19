@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Company = require('../models/Company');
 const Driver = require('../models/Driver');
+const Card = require('../models/Card');
 
 const userResolvers = {
   Query: {
@@ -114,71 +115,37 @@ const userResolvers = {
         return { success: false, message: err.message || 'Login failed' };
       }
     },
-    
 
-    // Update an existing user
-    updateUser: async (_, { id, firstName, lastName, email, phoneNumber, userType, companyId }, context) => {
+    updateDefaultCard: async (_, { nfcId }, context) => {
       try {
-        const { user } = context; // Get the user from context
+        const { user } = context;
+        if (!user) return { success: false, message: 'Unauthorized' };
     
-        // Ensure the user is authenticated
-        if (!user) {
-          return { success: false, message: 'Unauthorized' };
+        // Find card by NFC ID and populate user field
+        const card = await Card.findOne({ nfcId }).populate('user');
+        console.log('Found Card:', card); // Log the card object
+    
+        if (!card) return { success: false, message: 'Card not found' };
+    
+        // Ensure card.user exists and compare ObjectId correctly
+        if (!card.user || card.user.id !== user.id) {
+          return { success: false, message: 'Permission denied, card not linked to user' };
         }
     
-        // If an ID is passed, the signed-in user must be an admin to update other users
-        if (id) {
-          // Check if the logged-in user is an admin
-          if (user.userType !== 'admin') {
-            return { success: false, message: 'Permission denied' };
-          }
+        // Retrieve the user as a Mongoose document to use `.save()`
+        const userDocument = await User.findById(user.id); // Ensure you are using Mongoose document
+        if (!userDocument) return { success: false, message: 'User not found' };
     
-          // Find the user by the passed ID
-          const userToUpdate = await User.findById(id);
-          if (!userToUpdate) {
-            return { success: false, message: 'User not found' };
-          }
+        // Set the default card for the user
+        userDocument.defaultCard = card.id;
     
-          // Update the fields that are passed
-          if (firstName) userToUpdate.firstName = firstName;
-          if (lastName) userToUpdate.lastName = lastName;
-          if (email) userToUpdate.email = email;
-          if (phoneNumber) userToUpdate.phoneNumber = phoneNumber;
-          if (userType) {
-            userToUpdate.userType = userType;
-            
-            // If userType is 'company', associate a companyId
-            if (userType === 'company' && companyId) {
-              userToUpdate.company = mongoose.Types.ObjectId(companyId);
-            } else if (userType !== 'company') {
-              // If userType is not 'company', clear the company field
-              userToUpdate.company = null;
-            }
-          }
+        // Save the updated user document
+        await userDocument.save();
     
-          // Save the updated user
-          await userToUpdate.save();
-          return { success: true, data: userToUpdate };
-        } else {
-          // If no ID is passed, the logged-in user is updating their own profile
-          const userToUpdate = await User.findById(user.id);
-          if (!userToUpdate) {
-            return { success: false, message: 'User not found' };
-          }
-    
-          // Users cannot update their own userType, only personal information
-          if (firstName) userToUpdate.firstName = firstName;
-          if (lastName) userToUpdate.lastName = lastName;
-          if (email) userToUpdate.email = email;
-          if (phoneNumber) userToUpdate.phoneNumber = phoneNumber;
-    
-          // Save the updated user
-          await userToUpdate.save();
-          return { success: true, data: userToUpdate };
-        }
+        return { success: true, data: userDocument };
       } catch (err) {
-        console.error('Error updating user:', err);
-        return { success: false, message: err.message || 'Error updating user' };
+        console.error('Error updating default card:', err);
+        return { success: false, message: err.message || 'Error updating default card' };
       }
     },
 
@@ -251,6 +218,26 @@ const userResolvers = {
       } catch (err) {
         console.error('Error deleting user:', err);
         return { success: false, message: err.message || 'Error deleting user' };
+      }
+    }
+  },
+  User: {
+    cards: async (parent) => {
+      try {
+        const cards = await Card.find({ user: parent.id });
+        return cards;
+      } catch (err) {
+        console.error('Error fetching cards:', err);
+        return [];
+      }
+    },
+    defaultCard: async (parent) => {
+      try {
+        const card = await Card.findById(parent.defaultCard);
+        return card;
+      } catch (err) {
+        console.error('Error fetching default card:', err);
+        return null;
       }
     }
   }

@@ -1,4 +1,3 @@
-// models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -9,8 +8,25 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
-  userType: { type: String, enum: ['customer', 'admin', 'company'], default: 'customer'},
-  company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' }  // Add this line
+  userType: { 
+    type: String, 
+    enum: ['customer', 'admin', 'company'], 
+    default: 'customer'
+  },
+  company: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Company' 
+  }, // Reference to Company model if user is a company user
+  cards: [
+    { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Card' // Reference to Card model for linked cards
+    }
+  ],
+  defaultCard: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Card', // Reference to Card model for the user's default card
+  }
 }, {
   timestamps: true
 });

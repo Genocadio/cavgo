@@ -10,6 +10,8 @@ const userTypes = gql`
     phoneNumber: String!
     userType: String!
     company: Company  # Add this line
+    cards: [Card]  # Add cards as an array of references to Card model
+    defaultCard: Card 
   }
   
   type AuthPayload {
@@ -75,6 +77,7 @@ const userTypes = gql`
     newPassword: String!, 
     userId: ID
   ): ChangePasswordResponse!
+  updateDefaultCard(nfcId: String): UserResponse!
   }
 `;
 
@@ -715,11 +718,12 @@ const cardTypes = gql`
   type Card {
     id: ID!
     nfcId: String!
-    user: User!
+    user: User
     creator: User!
     createdAt: String!
     cardId: String!
     active: Boolean!
+    wallet: Wallet
   }
 
   type CardResponse {
@@ -765,6 +769,65 @@ const cardTypes = gql`
 `;
 
 
+const walletTypes = gql`
+  # Scalar type definitions
+  scalar DateTime
+
+  # WalletTransaction type for individual transactions in the wallet
+  type WalletTransaction {
+    type: String!          # Type of transaction: 'credit' or 'debit'
+    amount: Float!         # Amount of the transaction
+    description: String    # Description of the transaction (optional)
+    date: DateTime!        # Timestamp of the transaction
+  }
+
+  # Wallet type definition
+  type Wallet {
+    id: ID!
+    user: User!            # Linked user for the wallet
+    card: Card !            # Optional: Linked card for the wallet
+    balance: Float!        # Current balance in the wallet
+    transactions: [WalletTransaction!]! # List of transactions in the wallet
+    createdAt: DateTime!   # Wallet creation timestamp
+    updatedAt: DateTime!   # Wallet last updated timestamp
+  }
+
+  # Response types
+  type WalletResponse {
+    success: Boolean!
+    message: String
+    data: Wallet
+  }
+
+  type WalletListResponse {
+    success: Boolean!
+    message: String
+    data: [Wallet!]
+  }
+
+  # Input types
+  input WalletTransactionInput {
+    type: String!          # Type of transaction: 'credit' or 'debit'
+    amount: Float!         # Amount of the transaction
+    description: String    # Optional: Description of the transaction
+  }
+
+  # Query type
+  type Query {
+    getWallet(id: ID!): WalletResponse!      # Fetch a wallet by its ID
+    getWallets: WalletListResponse!          # Fetch all wallets (admin-only)
+  }
+
+  # Mutation type
+  type Mutation {
+    createWallet(userId: ID, nfcId: ID): WalletResponse! # Create a new wallet
+    updateWallet(
+      nfcId: ID!,
+      transaction: WalletTransactionInput!
+    ): WalletResponse!                                    # Update wallet balance
+    deleteWallet(id: ID!): WalletResponse!               # Delete a wallet by ID
+  }
+`;
 
 
 // Combine all the types and export them
@@ -782,5 +845,6 @@ module.exports = {
   scheduleTypes,
   tripPresttypes,
   posMachineTypes,
-  cardTypes
+  cardTypes,
+  walletTypes
 };
