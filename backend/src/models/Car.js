@@ -24,6 +24,15 @@ carSchema.set('toJSON', {
   }
 });
 
+// Pre-save middleware to ensure plateNumber is uppercase and only contains digits and letters
+carSchema.pre('save', function(next) {
+  if (this.plateNumber) {
+    // Remove any non-alphanumeric characters, then convert to uppercase
+    this.plateNumber = this.plateNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  }
+  next();
+});
+
 // Pre-save middleware to ensure only one car can have the same driver at a time
 carSchema.pre('save', async function(next) {
   if (this.driver) {

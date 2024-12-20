@@ -31,6 +31,38 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Middleware to format fields before saving the user
+userSchema.pre('save', async function(next) {
+  try {
+    // Format firstName to be fully capitalized
+    if (this.firstName) {
+      this.firstName = this.firstName.toUpperCase();
+    }
+
+    // Format lastName such that each word starts with a capital letter
+    if (this.lastName) {
+      this.lastName = this.lastName
+        .split(' ')
+        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
+        .join(' ');
+    }
+
+    // Format email to lowercase
+    if (this.email) {
+      this.email = this.email.toLowerCase();
+    }
+
+    // Format phoneNumber to only contain numbers (remove non-digit characters)
+    if (this.phoneNumber) {
+      this.phoneNumber = this.phoneNumber.replace(/\D/g, ''); // Keep only digits
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();

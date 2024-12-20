@@ -219,7 +219,49 @@ const userResolvers = {
         console.error('Error deleting user:', err);
         return { success: false, message: err.message || 'Error deleting user' };
       }
+    },
+
+    updateUser: async (_, { id, firstName, lastName, email, phoneNumber, userType, companyId }, context) => {
+      try {
+        const { user } = context; // Get the user from context
+
+        // Ensure the user is authenticated
+        if (!user) {
+          return { success: false, message: 'Unauthorized' };
+        }
+
+        // Ensure the user has the permission to update the target user
+        // If no id is provided, update the logged-in user's data
+        // If id is provided, only admin or the user themselves can update
+        if (id && (user.userType !== 'admin' && user.id !== id)) {
+          return { success: false, message: 'Permission denied' };
+        }
+
+        // Find the user to update
+        const userToUpdate = await User.findById(id || user.id); // If no id provided, update the logged-in user
+
+        if (!userToUpdate) {
+          return { success: false, message: 'User not found' };
+        }
+
+        // Update user details
+        if (firstName) userToUpdate.firstName = firstName;
+        if (lastName) userToUpdate.lastName = lastName;
+        if (email) userToUpdate.email = email;
+        if (phoneNumber) userToUpdate.phoneNumber = phoneNumber;
+        if (userType) userToUpdate.userType = userType;
+        if (companyId) userToUpdate.company = companyId;
+
+        // Save the updated user
+        await userToUpdate.save();
+
+        return { success: true, data: userToUpdate, message: 'User updated successfully' };
+      } catch (err) {
+        console.error('Error updating user:', err);
+        return { success: false, message: err.message || 'Error updating user' };
+      }
     }
+    
   },
   User: {
     cards: async (parent) => {

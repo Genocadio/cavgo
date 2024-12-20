@@ -104,6 +104,7 @@ const walletResolvers = {
             card: cardId,
             balance: 0, // Default balance
           });
+          
       
           // Save the wallet to the database
           await wallet.save();
@@ -139,13 +140,14 @@ const walletResolvers = {
           }
       
           // Find the card by ID
+
           const card = await Card.findOne({ nfcId }).populate('user');
           if (!card) {
             return { success: false, message: 'Card not found' };
           }
       
           // Find the wallet associated with the card's user
-          const wallet = await Wallet.findOne({ user: card.user._id });
+          const wallet = await Wallet.findOne({ card: card._id });
           if (!wallet) {
             return { success: false, message: 'Wallet not found for the given card' };
           }

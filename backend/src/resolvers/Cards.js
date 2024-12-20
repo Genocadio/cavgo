@@ -105,9 +105,16 @@ const cardResolvers = {
           user: userId, // Assign the user ID or null if no user
           creator: user.id, // Assign the current user as the creator
         });
+
+
     
         // Save the card to the database
         await card.save();
+        if (card.user !== null && card.wallet !== null) {
+          
+          return { success: true, message: 'Card created successfully with wallet', data: card };
+        }
+      
     
         return { success: true, message: 'Card created successfully', data: card };
       } catch (err) {

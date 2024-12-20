@@ -46,7 +46,7 @@ const bookingSchema = new mongoose.Schema({
 
 // Middleware to create a ticket when the booking status is set to "Confirmed"
 bookingSchema.pre('save', async function (next) {
-  if (this.isModified('status') && this.status === 'Confirmed') {
+  if (this.isModified('status') && (this.status === 'Confirmed' || this.status === 'Waiting Board')) {
     // Check if a ticket already exists for this booking
     const existingTicket = await Ticket.findOne({ booking: this._id });
     if (existingTicket) {

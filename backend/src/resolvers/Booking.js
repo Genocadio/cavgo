@@ -219,9 +219,13 @@ const bookingResolvers = {
           description: "Payment for booking by default card",
         }
 
-        if (Transaction.type === 'debit'  && wallet.balance >= amount.price && wallet !== null) {
-          wallet.balance += Transaction.type === 'debit' ? -amount : amount
+        if (Transaction.type === 'debit'  && wallet.balance >= Transaction.amount && wallet !== null) {
+          wallet.balance += Transaction.type === 'debit' ? -Transaction.amount : Transaction.amount
+
           wallet.transactions.push(Transaction)
+          await wallet.save()
+          booking.status = 'Waiting Board'
+          await booking.save()
           pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
           return {
             success: true,

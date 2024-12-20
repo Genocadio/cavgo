@@ -35,18 +35,4 @@ const walletSchema = new mongoose.Schema({
 });
 
 
-// Middleware to link the wallet to the card
-walletSchema.post('save', async function(doc, next) {
-  try {
-    if (doc.card) {
-      // Update the card to reference this wallet
-      await Card.findByIdAndUpdate(doc.card, { wallet: doc._id });
-    }
-    next();
-  } catch (error) {
-    console.error('Error linking wallet to card:', error);
-    next(error);
-  }
-});
-
 module.exports = mongoose.model('Wallet', walletSchema);
