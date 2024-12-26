@@ -94,6 +94,8 @@ const posResolvers = {
         // Check if a POS machine is already registered for this car
         const existingPosMachine = await PosMachine.findOne({ linkedCar: car._id });
         if (existingPosMachine) {
+          existingPosMachine.serialNumber = serialNumber
+          await existingPosMachine.save();
           const isValid = await existingPosMachine.comparePassword(password);
           if (!isValid) {
             return {
