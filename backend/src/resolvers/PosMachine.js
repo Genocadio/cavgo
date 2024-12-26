@@ -92,7 +92,7 @@ const posResolvers = {
         }
     
         // Check if a POS machine is already registered for this car
-        const existingPosMachine = await PosMachine.findOne({ linkedCar: car._id });
+        const existingPosMachine = await PosMachine.findOne({ linkedCar: car._id }).populate('linkedCar').populate('user');
         if (existingPosMachine) {
           existingPosMachine.serialNumber = serialNumber
           await existingPosMachine.save();
