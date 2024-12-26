@@ -94,10 +94,22 @@ const posResolvers = {
         // Check if a POS machine is already registered for this car
         const existingPosMachine = await PosMachine.findOne({ linkedCar: car._id });
         if (existingPosMachine) {
+          const isValid = await existingPosMachine.comparePassword(password);
+          if (!isValid) {
+            return {
+              success: false,
+              message: 'Invalid password for the registered POS machine',
+              data: null,
+            };
+          }
+
+          const {accessToken, refreshToken} = await existingPosMachine.generateToken();
           return {
-            success: false,
+            success: true,
             message: 'POS machine already registered for this car',
-            data: null,
+            data: existingPosMachine,
+            token: accessToken,
+            refreshToken: refreshToken, // No refresh token for new registration
           };
         }
     

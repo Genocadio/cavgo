@@ -64,7 +64,7 @@ bookingSchema.pre('save', async function (next) {
       user: this.user,
       trip: this.trip,
       qrCodeData,
-      nfcId,
+      nfcId: this.card.nfcId,
       validFrom: this.createdAt,
       validUntil: calculateTicketExpiry(this.createdAt),
     });

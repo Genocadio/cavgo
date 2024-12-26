@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Company = require('./Company'); // Import the Company model
 const Car = require('./Car');         // Import the Car model
-const bcrypt = require('bcrypt');     // For hashing passwords
+const bcrypt = require('bcryptjs');     // For hashing passwords
 const jwt = require('jsonwebtoken');
 
 const driverSchema = new mongoose.Schema({
