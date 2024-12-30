@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Ticket = require('./Ticket'); // Import the Ticket model
+const Card = require('./Card'); // Import the Card model
 const { generateQRCodeData, generateNFCId, calculateTicketExpiry } = require('../helpers/ticketUtils'); // Import helper functions
 
 const bookingSchema = new mongoose.Schema({
@@ -54,6 +55,7 @@ bookingSchema.pre('save', async function (next) {
       return next();
     }
 
+    const card = await Card.findOne( this.card )
     // Generate QR code and NFC data for the ticket
     const qrCodeData = generateQRCodeData(this._id, this.user, this.trip);
     const nfcId = generateNFCId(this._id);
@@ -64,7 +66,7 @@ bookingSchema.pre('save', async function (next) {
       user: this.user,
       trip: this.trip,
       qrCodeData,
-      nfcId: this.card.nfcId,
+      nfcId: card.nfcId,
       validFrom: this.createdAt,
       validUntil: calculateTicketExpiry(this.createdAt),
     });

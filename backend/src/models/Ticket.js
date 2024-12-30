@@ -24,7 +24,6 @@ const ticketSchema = new mongoose.Schema({
   nfcId: { // NFC ID associated with the ticket
     type: String,
     required: true,
-    unique: true
   },
   validFrom: {
     type: Date,
