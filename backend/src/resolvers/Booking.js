@@ -151,6 +151,7 @@ const bookingResolvers = {
 
   Mutation: {
     addBooking: async (_, { tripId, destination, numberOfTickets, price, nfcId }, context) => {
+      console.log('nfcId', nfcId, 'tripId', tripId, 'destination', destination, 'numberOfTickets', numberOfTickets, 'price', price);
       try {
         let userId;
         let card = null
