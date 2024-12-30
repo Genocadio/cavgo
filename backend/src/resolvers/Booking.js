@@ -180,7 +180,14 @@ const bookingResolvers = {
             };
           }
           userId = user.id;
+          card = user.defaultCard || null
+          if (card) {
+            newCard = await Card.findById(card)
+            nfcId = newCard.nfcId
+            card = newCard
+          }
         }
+        
     
         console.log('Finding trip with ID:', tripId);
         const trip = await Trip.findById(tripId);
