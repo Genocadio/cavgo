@@ -744,7 +744,7 @@ const cardTypes = gql`
     getCards: CardsResponse!
 
     # Fetch a single card by its ID
-    getCard(id: ID!): CardResponse!
+    getCard(nfcId: ID!): CardResponse!
   }
 
   type Mutation {

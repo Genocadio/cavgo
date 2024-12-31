@@ -28,22 +28,23 @@ const cardResolvers = {
     },
 
     // Get a single card by its ID
-    getCard: async (_, { id }, context) => {
+    getCard: async (_, { nfcId }, context) => {
       try {
         const { user } = context;
+        const { pos} = context
 
         // Ensure the user is authenticated
-        if (!user) {
+        if (!user && !pos) {
           return { success: false, message: 'Unauthorized' };
         }
 
-        const card = await Card.findOne({ nfcId: id }).populate('user').populate('creator');
+        const card = await Card.findOne({ nfcId: nfcId }).populate('user').populate('creator');
         if (!card) {
           return { success: false, message: 'Card not found' };
         }
 
         // Admins can view all cards; other users can only view their own cards
-        if (user.userType !== 'admin' && card.userId.toString() !== user.id) {
+        if (user && user.userType !== 'admin' && user.id !== card.creator.id) {
           return { success: false, message: 'Permission denied' };
         }
 
