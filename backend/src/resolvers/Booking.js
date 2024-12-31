@@ -86,6 +86,7 @@ const bookingResolvers = {
     getBookings: async (_, { tripId }, context) => {
       try {
           // Optional: Check if user is authenticated, but we can still return all bookings
+          console.log('context', context);
           if (!context.user && !context.pos) {
               return {
                   success: false,

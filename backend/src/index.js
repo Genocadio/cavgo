@@ -102,6 +102,7 @@ async function startApolloServer() {
     context: async ({ req }) => {
       return {
         user: req.user,
+        pos: req.pos,
       };
     }
   }));
