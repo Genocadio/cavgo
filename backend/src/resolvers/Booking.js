@@ -7,7 +7,8 @@ const { startPaymentCheckTimer} = require('../helpers/payment');
 const { PubSub, withFilter } = require('graphql-subscriptions');
 const pubsub = new PubSub();
 const Card = require('../models/Card');
-const Wallet = require('../models/Wallet');
+const Wallet = require('../models/Wallet')
+const PosMachine = require('../models/PosMachine');
 
 const bookingResolvers = {
   Query: {
@@ -15,7 +16,8 @@ const bookingResolvers = {
       try {
         // Check if the user is logged in (user ID should be available in the context)
         const user = context.user;
-        if (!user) {
+        const pos = context.pos;
+        if (!user && !pos) {
           return {
             success: false,
             message: 'User not authenticated',
@@ -84,8 +86,12 @@ const bookingResolvers = {
     getBookings: async (_, { tripId }, context) => {
       try {
           // Optional: Check if user is authenticated, but we can still return all bookings
-          if (!context.user) {
-              console.warn('User not authenticated, still returning all bookings.');
+          if (!context.user && !context.pos) {
+              return {
+                  success: false,
+                  message: 'Unauthorized access',
+                  data: null
+              };
           }
   
           // Define the query object
@@ -156,6 +162,15 @@ const bookingResolvers = {
         let userId;
         let card = null
         const { user } = context;
+        const {pos} = context;
+
+        if (!user &&!pos) {
+          return {
+            success: false,
+            message: 'User not authenticated',
+            data: null
+          };
+        }
         if (nfcId) {
           // If NFC ID is provided, get the user associated with the card
           card = await Card.findOne({ nfcId });
@@ -417,6 +432,17 @@ const bookingResolvers = {
         return null;
       } catch (err) {
         console.error('Error in Booking ticket resolver:', err); // Log error
+        return null;
+      }
+    },
+    pos: async function (booking) {
+      try {
+        if (booking.pos) {
+          return await PosMachine.findById(booking.pos);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error in Booking pos resolver:', err); // Log error
         return null;
       }
     }

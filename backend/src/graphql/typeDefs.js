@@ -437,6 +437,7 @@ const bookingsTypes = gql`
     createdAt: String! 
     status: String!
     ticket: Ticket  # Optional ticket field
+    pos: PosMachine
   }
 
   type Ticket {

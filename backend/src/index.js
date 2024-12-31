@@ -7,6 +7,7 @@ const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeType
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger');
 const authenticate = require('./middlewares/authMiddleware');
+const authPos = require('./middlewares/posMiddleware');
 
 const { ApolloServer } = require('@apollo/server')
 const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer')
@@ -95,6 +96,7 @@ async function startApolloServer() {
   app.use(requestLogger);
 
   app.use(authenticate);
+  app.use(authPos);
   app.use(express.json());
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => {

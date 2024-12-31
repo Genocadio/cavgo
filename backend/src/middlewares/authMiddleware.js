@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // Adjust path as necessary
 const Driver = require('../models/Driver'); // Import the Driver model
 const logger = require('./logger'); // Ensure this is configured correctly
+const PosMachine = require('../models/PosMachine'); // Import the POS model
 require('dotenv').config();
 const SECRET = process.env.JWT_SECRET;
 
@@ -29,7 +30,10 @@ const authenticate = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, SECRET);
+    let decoded = jwt.verify(token, SECRET);
+
+   logger.info(`Token verified. User ID: ${decoded.id}. Request Method: ${req.method}, Request URL: ${req.originalUrl}`);
+
     
     if (!decoded.id) {
       throw new Error('Token invalid');
@@ -41,7 +45,7 @@ const authenticate = async (req, res, next) => {
     // If not found in User, try finding in Driver model
     if (!user) {
       user = await Driver.findById(decoded.id);
-    }
+    }  
     
     if (!user) {
       throw new Error('User not found');

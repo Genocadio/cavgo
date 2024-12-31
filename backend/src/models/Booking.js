@@ -41,6 +41,7 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Ticket', 
     required: false // Optional field for referencing the generated ticket
   },
+  pos: { type: mongoose.Schema.Types.ObjectId, ref: 'PosMachine' },
 }, {
   timestamps: true, // Automatically adds createdAt and updatedAt fields
 });
@@ -76,6 +77,14 @@ bookingSchema.pre('save', async function (next) {
   }
   next();
 });
+
+bookingSchema.post('findOneAndDelete', async function (doc) {
+  if (doc) {
+    // Delete all tickets associated with the booking
+    await Ticket.deleteMany({ booking: doc._id });
+  }
+});
+
 
 // Transform _id to id for JSON responses
 bookingSchema.set('toJSON', {

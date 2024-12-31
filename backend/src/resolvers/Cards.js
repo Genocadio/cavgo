@@ -37,7 +37,7 @@ const cardResolvers = {
           return { success: false, message: 'Unauthorized' };
         }
 
-        const card = await Card.findById(id).populate('userId').populate('creatorId');
+        const card = await Card.findOne({ nfcId: id }).populate('user').populate('creator');
         if (!card) {
           return { success: false, message: 'Card not found' };
         }
