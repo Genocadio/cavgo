@@ -831,6 +831,75 @@ const walletTypes = gql`
 `;
 
 
+const AgentsTypes = gql `
+
+type AgentWallet {
+  balance: Float!
+  transactions: [WalletTransaction!]!
+}
+
+type Agent {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phoneNumber: String!
+  status: String!
+  wallet: AgentWallet!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type AgentPayload {
+  success: Boolean!
+  token: String
+  agent: Agent
+  message: String
+}
+
+type Query {
+  getAgent(id: ID!): AuthPayload!
+  getAgents: AuthPayload!
+  getAgentWallet(id: ID!): AuthPayload!
+}
+
+type Mutation {
+  registerAgent(
+    firstName: String!
+    lastName: String!
+    email: String!
+    phoneNumber: String!
+    password: String!
+  ): AgentPayload!
+
+  loginAgent(email: String!, password: String!): AgentPayload!
+
+  updateAgent(
+    id: ID!
+    firstName: String
+    lastName: String
+    email: String
+    phoneNumber: String
+  ): AgentPayload!
+
+  deleteAgent(id: ID!): AuthPayload!
+
+  addTransaction(
+    id: ID!
+    type: String!
+    amount: Float!
+    description: String
+  ): AgentPayload!
+}
+
+type SuccessResponse {
+  success: Boolean!
+  message: String
+}
+
+`
+
+
 // Combine all the types and export them
 module.exports = {
   userTypes,
@@ -847,5 +916,6 @@ module.exports = {
   tripPresttypes,
   posMachineTypes,
   cardTypes,
-  walletTypes
+  walletTypes,
+  AgentsTypes
 };

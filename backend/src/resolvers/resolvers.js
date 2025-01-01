@@ -12,6 +12,7 @@ const tripPresetResolvers = require('./tripPresetResolvers');
 const posResolvers = require('./PosMachine');
 const cardResolvers = require('./Cards');
 const walletResolvers = require('./wallet');
+const agentResolvers = require('./Agents');
 
 const resolvers = {
   Query: {
@@ -29,6 +30,7 @@ const resolvers = {
     ...posResolvers.Query,
     ...cardResolvers.Query,
     ...walletResolvers.Query,
+    ...agentResolvers.Query
     
 
   },
@@ -48,6 +50,7 @@ const resolvers = {
     ...posResolvers.Mutation,
     ...cardResolvers.Mutation,
     ...walletResolvers.Mutation,
+    ...agentResolvers.Mutation
   
   },
 
