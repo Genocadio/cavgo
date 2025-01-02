@@ -128,14 +128,15 @@ const walletResolvers = {
     updateWallet: async (_, { nfcId, transaction }, context) => {
         try {
           const { user } = context;
+          const {agent } = context
       
           // Check if the user is authenticated
-          if (!user) {
+          if (!user && !agent) {
             return { success: false, message: 'Unauthorized' };
           }
       
           // Check if the user has admin permissions
-          if (user.userType !== 'admin') {
+          if (user && user.userType !== 'admin') {
             return { success: false, message: 'Permission denied' };
           }
       
