@@ -1,6 +1,7 @@
 const Wallet = require('../models/Wallet');
 const User = require('../models/User');
 const Card = require('../models/Card');
+const Agent = require('../models/Agents');
 
 const walletResolvers = {
   Query: {
@@ -129,6 +130,8 @@ const walletResolvers = {
         try {
           const { user } = context;
           const {agent } = context
+          let agentbalace = null;
+          let tempagent = null;
       
           // Check if the user is authenticated
           if (!user && !agent) {
@@ -161,6 +164,32 @@ const walletResolvers = {
       
           if (type === 'debit' && wallet.balance < amount) {
             return { success: false, message: 'Insufficient balance for debit transaction' };
+          } 
+
+          if (agent) {
+            if (amount > agent.wallet.balance) {
+              return { success: false, message: 'Insufficient balance for agent' };
+            }
+            
+            tempagent = await Agent.findById(agent.id);
+            tempagent.wallet.balance -= amount;
+            await tempagent.save();
+            agentbalace = tempagent.wallet.balance;
+            wallet.balance += type === 'credit' ? amount : -amount;
+      
+            // Add transaction to the wallet
+            wallet.transactions.push({
+              type,
+              amount,
+              description,
+              date: new Date(),
+            });
+            return {
+              success: true,
+              message: 'Wallet updated successfully',
+              data: wallet,
+              agentbalance: agentbalace
+            };
           }
       
           // Update balance

@@ -798,6 +798,7 @@ const walletTypes = gql`
     success: Boolean!
     message: String
     data: Wallet
+    agentbalace: Float
   }
 
   type WalletListResponse {
