@@ -163,18 +163,22 @@ const walletResolvers = {
           }
       
           if (type === 'debit' && wallet.balance < amount) {
-            return { success: false, message: 'Insufficient balance for debit transaction' };
+            return { success: false, message: 'Insufficient balance for debit transaction'};
           } 
 
           if (agent) {
             if (amount > agent.wallet.balance) {
               return { success: false, message: 'Insufficient balance for agent' };
             }
+            console.log('agent:', agent);
             
             tempagent = await Agent.findById(agent.id);
+            console.log('agent temp:', tempagent);
             tempagent.wallet.balance -= amount;
+            
             await tempagent.save();
             agentbalace = tempagent.wallet.balance;
+            console.log('agent temp bal****:', agentbalace);
             wallet.balance += type === 'credit' ? amount : -amount;
       
             // Add transaction to the wallet
@@ -186,7 +190,7 @@ const walletResolvers = {
             });
             return {
               success: true,
-              message: 'Wallet updated successfully',
+              message: 'Wallet updated successfully by agent',
               data: wallet,
               agentbalance: agentbalace
             };
