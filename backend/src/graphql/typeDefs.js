@@ -857,9 +857,27 @@ type AgentPayload {
   message: String
 }
 
+type agentWalletResponse {
+  success: Boolean!
+  message: String
+  data: AgentWallet
+
+}
+type getAgentResponse {
+  success: Boolean!
+  message: String
+  data: Agent
+}
+
+type getAgentsResponse {
+  success: Boolean!
+  message: String
+  data: [Agent]
+}
+
 type Query {
-  getAgent(id: ID!): AuthPayload!
-  getAgents: AuthPayload!
+  getAgent(id: ID!): getAgentResponse!
+  getAgents: getAgentsResponse!
   getAgentWallet(id: ID!): AuthPayload!
 }
 

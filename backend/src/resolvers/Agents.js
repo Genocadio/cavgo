@@ -99,12 +99,12 @@ const agentResolvers = {
     getAgent: async (_, { id }, context) => {
       try {
         const { user } = context; // Get the user from context
-        if (!user) return { success: false, message: 'Unauthorized' };
+        // if (!user) return { success: false, message: 'Unauthorized' };
 
-        // Allow agents to view their own profile or admins to view any profile
-        if (user.userType !== 'admin' && user._id.toString() !== id) {
-          return { success: false, message: 'Access denied' };
-        }
+        // // Allow agents to view their own profile or admins to view any profile
+        // if (user.userType !== 'admin' && user._id.toString() !== id) {
+        //   return { success: false, message: 'Access denied' };
+        // }
 
         const agent = await Agent.findById(id);
         if (!agent) return { success: false, message: 'Agent not found' };
