@@ -188,6 +188,9 @@ const walletResolvers = {
               description,
               date: new Date(),
             });
+
+            await wallet.save();
+            
             return {
               success: true,
               message: 'Wallet updated successfully by agent',
