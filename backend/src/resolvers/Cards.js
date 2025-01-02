@@ -60,18 +60,20 @@ const cardResolvers = {
     createCard: async (_, { nfcId, email, phone, firstName, lastName }, context) => {
       try {
         const { user } = context;
+        const { agent } = context;
     
         // Ensure the user is authenticated
-        if (!user) {
+        if (!user && !agent) {
           return { success: false, message: 'Unauthorized' };
         }
     
         // Only admins can create new cards
-        if (user.userType !== 'admin') {
+        if (!agent && user.userType !== 'admin') {
           return { success: false, message: 'Permission denied' };
         }
     
         let userId = null;
+        let card = null;
     
         // Check if email or phone is provided
         if (email || phone) {
@@ -99,9 +101,28 @@ const cardResolvers = {
             userId = existingUser.id;
           }
         }
+
+        if (agent) {
+          card = await Card.findOne({ nfcId: nfcId });
+          
+          if (card) {
+             if (card.user && card.active) {
+              return { success: false, message: 'Card already registered' };
+             }
+            card.agent = agent.id;
+            card.user = userId;
+            card.active = true;
+            await card.save();
+            return { success: true, message: 'Card registered successfully', data: card };
+          } else {
+            return { success: false, message: 'Card not Valid' };
+          }
+
+         
+        } 
     
         // Create a new card with the user's ID (if available)
-        const card = new Card({
+        card = new Card({
           nfcId,
           user: userId, // Assign the user ID or null if no user
           creator: user.id, // Assign the current user as the creator

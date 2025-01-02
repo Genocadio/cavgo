@@ -16,6 +16,7 @@ const cardSchema = new mongoose.Schema({
     sparse: true 
   },
   active: { type: Boolean, default: false },
+  agent: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
 }, {
   timestamps: true,
 });

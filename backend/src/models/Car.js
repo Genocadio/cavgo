@@ -11,6 +11,7 @@ const carSchema = new mongoose.Schema({
   driver: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver' }, // Optional reference to Driver model
   isOccupied: { type: Boolean, default: false },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // Field to reference the User who added the car
+   // Optional reference to Agent model
 }, {
   timestamps: true
 });
