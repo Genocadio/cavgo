@@ -32,9 +32,10 @@ const cardResolvers = {
       try {
         const { user } = context;
         const { pos} = context
+        const { agent } = context
 
         // Ensure the user is authenticated
-        if (!user && !pos) {
+        if (!user && !pos && !agent) {
           return { success: false, message: 'Unauthorized' };
         }
 
