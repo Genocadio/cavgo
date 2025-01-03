@@ -141,21 +141,21 @@ const agentResolvers = {
         // if (user.userType !== 'admin' && user._id.toString() !== id) {
         //   return { success: false, message: 'Access denied' };
         // }
-        const {agentt} = context
-        if (!agentt && !user) return { success: false, message: 'Unauthorized' };
+        const {agent} = context
+        if (!agent && !user) return { success: false, message: 'Unauthorized' };
         if(user && user.userType !== 'admin') {
             return { success: false, message: 'Access denied' };
         }
         let Id = id
-        if(agentt) {
-            Id = agentt.id
+        if(agent) {
+            Id = agent.id
         } 
-        const agent = await Agent.findById(Id);
+        const agentt = await Agent.findById(Id);
         console.log("\n\n\n\n\n\n****get agent ######\n\n\n", agent);
 
-        if (!agent) return { success: false, message: 'Agent not found' };
+        if (!agentt) return { success: false, message: 'Agent not found' };
 
-        return { success: true, data: agent };
+        return { success: true, data: agentt };
       } catch (err) {
         console.error('Error fetching agent:', err);
         return { success: false, message: err.message || 'Error fetching agent' };
