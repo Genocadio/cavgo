@@ -108,7 +108,22 @@ agentSchema.methods.comparePassword = async function (password) {
 
 // Generate JWT token
 agentSchema.methods.generateToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '7h' });
+  // Generate the access token with a short expiration time (e.g., 1 hour)
+  const accessToken = jwt.sign(
+    { id: this._id }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '1h' } // Access token expires in 1 hour
+  );
+
+  // Generate the refresh token with a long expiration time (e.g., 30 days)
+  const refreshToken = jwt.sign(
+    { id: this._id }, 
+    process.env.JWT_REFRESH_SECRET, // Use a separate secret for refresh token
+    { expiresIn: '3h' } // Refresh token expires in 30 days
+  );
+
+  // Return both tokens
+  return { accessToken, refreshToken };
 };
 
 module.exports = mongoose.model('Agent', agentSchema);

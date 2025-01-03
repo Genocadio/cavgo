@@ -3,12 +3,13 @@ const Booking = require('../models/Booking');
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const Ticket = require('../models/Ticket');
-const { startPaymentCheckTimer} = require('../helpers/payment');
+const { startPaymentCheckTimer } = require('../helpers/payment');
 const { PubSub, withFilter } = require('graphql-subscriptions');
 const pubsub = new PubSub();
 const Card = require('../models/Card');
 const Wallet = require('../models/Wallet')
 const PosMachine = require('../models/PosMachine');
+const Agent = require('../models/Agents');
 
 const bookingResolvers = {
   Query: {
@@ -24,16 +25,16 @@ const bookingResolvers = {
             data: null
           };
         }
-    
+
         let booking;
-    
+
         // If an id is provided, fetch the specific booking
         if (id) {
           booking = await Booking.findById(id)
             .populate('user')
             .populate('trip')
             .populate('tickets');
-    
+
           if (!booking) {
             return {
               success: false,
@@ -41,7 +42,7 @@ const bookingResolvers = {
               data: null
             };
           }
-    
+
           // If the booking is found but doesn't belong to the logged-in user
           if (booking.user._id.toString() !== user.id) {
             return {
@@ -50,7 +51,7 @@ const bookingResolvers = {
               data: null
             };
           }
-    
+
         } else {
           // If no id is provided, fetch all bookings for the logged-in user
           booking = await Booking.find({ user: user.id })
@@ -58,7 +59,7 @@ const bookingResolvers = {
             .populate('trip')
             .populate('tickets')
             .sort({ createdAt: -1 }); // Optional: Sort by creation date, newest first
-    
+
           if (!booking || booking.length === 0) {
             return {
               success: false,
@@ -67,7 +68,7 @@ const bookingResolvers = {
             };
           }
         }
-    
+
         return {
           success: true,
           message: 'Booking(s) fetched successfully',
@@ -82,90 +83,161 @@ const bookingResolvers = {
         };
       }
     },
-    
+
     getBookings: async (_, { tripId }, context) => {
       try {
-          // Optional: Check if user is authenticated, but we can still return all bookings
-          console.log('context', context);
-          if (!context.user && !context.pos) {
-              return {
-                  success: false,
-                  message: 'Unauthorized access',
-                  data: null
-              };
-          }
-  
-          // Define the query object
-          const query = tripId ? { trip: tripId } : {};
-  
-          // Fetch bookings with optional tripId filter
-          const bookings = await Booking.find(query).populate('trip');
-  
-          return {
-              success: true,
-              message: tripId 
-                  ? `Bookings for trip ${tripId} fetched successfully`
-                  : 'All bookings fetched successfully',
-              data: bookings
-          };
-      } catch (err) {
-          console.error('Error in getBookings:', err); // Log error
-          return {
-              success: false,
-              message: err.message || 'Error fetching bookings',
-              data: null
-          };
-      }
-  },
-  
-
-    getBookingsByUser: async (_, { userId }, context) => {
-        try {
-          // Check if user is authenticated
-          console.log('context', context);
-          if (!context.user) {
-            return {
-              success: false,
-              message: 'Unauthorized access',
-              data: null
-            };
-          }
-      
-          // Determine which user to fetch bookings for
-          const queryUserId = userId || context.user.id; // Use provided userId or logged-in user's ID
-      
-          // Fetch bookings based on userId
-          const bookings = await Booking.find({ user: queryUserId })
-            .populate('trip');
-      
-          return {
-            success: true,
-            message: 'Bookings fetched successfully',
-            data: bookings
-          };
-        } catch (err) {
-          console.error('Error in getBookingsByUser:', err); // Log error
+        // Optional: Check if user is authenticated, but we can still return all bookings
+        console.log('context', context);
+        if (!context.user && !context.pos) {
           return {
             success: false,
-            message: err.message || 'Error fetching bookings',
+            message: 'Unauthorized access',
             data: null
           };
         }
+
+        // Define the query object
+        const query = tripId ? { trip: tripId } : {};
+
+        // Fetch bookings with optional tripId filter
+        const bookings = await Booking.find(query).populate('trip');
+
+        return {
+          success: true,
+          message: tripId
+            ? `Bookings for trip ${tripId} fetched successfully`
+            : 'All bookings fetched successfully',
+          data: bookings
+        };
+      } catch (err) {
+        console.error('Error in getBookings:', err); // Log error
+        return {
+          success: false,
+          message: err.message || 'Error fetching bookings',
+          data: null
+        };
       }
-      
-      
+    },
+
+
+    getBookingsByUser: async (_, { userId }, context) => {
+      try {
+        // Check if user is authenticated
+        console.log('context', context);
+        if (!context.user) {
+          return {
+            success: false,
+            message: 'Unauthorized access',
+            data: null
+          };
+        }
+
+        // Determine which user to fetch bookings for
+        const queryUserId = userId || context.user.id; // Use provided userId or logged-in user's ID
+
+        // Fetch bookings based on userId
+        const bookings = await Booking.find({ user: queryUserId })
+          .populate('trip');
+
+        return {
+          success: true,
+          message: 'Bookings fetched successfully',
+          data: bookings
+        };
+      } catch (err) {
+        console.error('Error in getBookingsByUser:', err); // Log error
+        return {
+          success: false,
+          message: err.message || 'Error fetching bookings',
+          data: null
+        };
+      }
+    }
+
+
   },
 
   Mutation: {
+
+    addAgentBooking: async (_, { tripId, destination, numberOfTickets, price, clientName }, context) => {
+      console.log('tripId', tripId, 'destination', destination, 'numberOfTickets', numberOfTickets, 'price', price);
+      try {
+        const { agent } = context
+        if (!agent) {
+          return {
+            success: false,
+            message: 'User not authenticated',
+            data: null
+          };
+        } else {
+          if (price > agent.wallet.balance) {
+            return { success: false, message: 'Insufficient balance for agent' };
+          }
+          console.log('agent e:', agent);
+          const trip = await Trip.findById(tripId);
+          if (!trip) {
+            console.log('Trip not found:', tripId); // Log when trip is not found
+            return {
+              success: false,
+              message: 'Trip not found',
+              data: null
+            };
+          }
+          if(!clientName){
+            return {
+              success: false,
+              message: 'Client name is required',
+              data: null
+            };
+          }
+
+          tempagent = await Agent.findById(agent.id);
+          console.log('agent temp:', tempagent);
+          tempagent.wallet.balance -= price;
+
+          await tempagent.save();
+          agentbalace = tempagent.wallet.balance;
+          console.log('agent temp bal****:', agentbalace);
+
+          const booking = new Booking({
+            trip: trip._id,
+            destination,
+            status: 'Waiting Board',
+            numberOfTickets,
+            price,
+            agent: agent.id,
+            clientName
+          });
+          const savedBooking = await booking.save();
+          console.log('savedBooking:', savedBooking);
+          return {
+            success: true,
+            message: 'Agent booking created successfully',
+            data: savedBooking,
+            balance: agentbalace
+          };
+        }
+
+
+
+      } catch (err) {
+        console.error('Error in agentBooking:', err); // Log error
+        return {
+          success: false,
+          message: err.message || 'Error creating agentbooking',
+          data: null
+        };
+      }
+    },
     addBooking: async (_, { tripId, destination, numberOfTickets, price, nfcId }, context) => {
       console.log('nfcId', nfcId, 'tripId', tripId, 'destination', destination, 'numberOfTickets', numberOfTickets, 'price', price);
       try {
         let userId;
         let card = null
         const { user } = context;
-        const {pos} = context;
+        const { pos } = context;
 
-        if (!user &&!pos) {
+        if (!user && !pos) {
           return {
             success: false,
             message: 'User not authenticated',
@@ -187,7 +259,7 @@ const bookingResolvers = {
           userId = card.user;
         } else {
           // If NFC ID is not provided, use the user from context
-          
+
           if (!user) {
             console.log('User not found in context'); // Log when user is not authorized
             return {
@@ -204,8 +276,8 @@ const bookingResolvers = {
             card = newCard
           }
         }
-        
-    
+
+
         console.log('Finding trip with ID:', tripId);
         const trip = await Trip.findById(tripId);
         if (!trip) {
@@ -216,7 +288,7 @@ const bookingResolvers = {
             data: null
           };
         }
-    
+
         const booking = new Booking({
           user: userId, // Use the user ID obtained from context or NFC card
           trip: trip._id,
@@ -225,25 +297,25 @@ const bookingResolvers = {
           card: nfcId ? card._id : null,
           price
         });
-    
+
         await booking.save();
         let paycard = null
-        if(nfcId) {
-          paycard =  card._id
+        if (nfcId) {
+          paycard = card._id
 
         }
         if (user && !nfcId) {
           paycard = user.defaultCard
         }
-        const wallet =  paycard ? await Wallet.findOne( {card: paycard}) : null;
+        const wallet = paycard ? await Wallet.findOne({ card: paycard }) : null;
 
         const Transaction = {
-          type:"debit",
+          type: "debit",
           amount: price,
           description: "Payment for booking by default card",
         }
 
-        if (Transaction.type === 'debit'  && wallet.balance >= Transaction.amount && wallet !== null) {
+        if (Transaction.type === 'debit' && wallet.balance >= Transaction.amount && wallet !== null) {
           wallet.balance += Transaction.type === 'debit' ? -Transaction.amount : Transaction.amount
 
           wallet.transactions.push(Transaction)
@@ -261,7 +333,7 @@ const bookingResolvers = {
 
 
         startPaymentCheckTimer(booking._id);
-    
+
         console.log('Booking created successfully:', booking); // Log successful booking creation
         pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });
         return {
@@ -277,8 +349,8 @@ const bookingResolvers = {
           data: null
         };
       }
-    } ,   
-      
+    },
+
     deleteBooking: async (_, { id }, context) => {
       try {
         const { user } = context;

@@ -24,13 +24,49 @@ const agentResolvers = {
         const isMatch = await agent.comparePassword(password);
         if (!isMatch) return { success: false, message: 'Invalid credentials' };
 
-        const token = agent.generateToken();
-        return { success: true, token, agent };
+        const { accessToken, refreshToken } = agent.generateToken();
+        return { success: true, token: accessToken, agent, refreshToken };
       } catch (err) {
         console.error('Login failed:', err);
         return { success: false, message: err.message || 'Login failed' };
       }
     },
+
+     regenerateAgentToken: async (_, { refreshToken }) => {
+          try {
+            // Step 1: Verify the refresh token (decode it)
+            const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+            
+            // Step 2: Find the POS machine by ID from the decoded token
+            const agent = await Agent.findById(decodedToken.id).populate('linkedCar');
+            
+            if (!agent) {
+              return {
+                success: false,
+                message: 'POS machine not found for the provided refresh token',
+                data: null,
+              };
+            }
+        
+            // Step 3: Generate new access token and refresh token
+            const newTokens = agent.generateToken(); // Returns both accessToken and refreshToken
+        
+            // Step 4: Return both tokens in the response
+            return {
+              success: true,
+              message: 'Tokens regenerated successfully',
+              data: null, // You can populate this with any data you'd like to return
+              token : newTokens.accessToken,
+              refreshToken: newTokens.refreshToken
+            };
+          } catch (error) {
+            return {
+              success: false,
+              message: `Error regenerating tokens: ${error.message}`,
+              data: null,
+            };
+          }
+        },
 
     updateAgent: async (_, { id, firstName, lastName, email, phoneNumber }, context) => {
       try {

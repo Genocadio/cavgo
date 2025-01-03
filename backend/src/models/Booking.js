@@ -4,10 +4,17 @@ const Card = require('./Card'); // Import the Card model
 const { generateQRCodeData, generateNFCId, calculateTicketExpiry } = require('../helpers/ticketUtils'); // Import helper functions
 
 const bookingSchema = new mongoose.Schema({
+  agent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Agent',
+  },
+  clientName: {
+    type: String,
+    default: null,
+  },
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
-    required: true 
   },
   trip: { 
     type: mongoose.Schema.Types.ObjectId, 
@@ -47,6 +54,15 @@ const bookingSchema = new mongoose.Schema({
 });
 
 // Middleware to create a ticket when the booking status is set to "Confirmed"
+
+bookingSchema.pre('validate', function (next) {
+  if ((!this.agent && !this.user) || (this.agent && this.user)) {
+    return next(new Error('Either agent or user must be present, but not both.'));
+  }
+  next();
+});
+
+
 bookingSchema.pre('save', async function (next) {
   if (this.isModified('status') && (this.status === 'Confirmed' || this.status === 'Waiting Board')) {
     // Check if a ticket already exists for this booking
@@ -60,6 +76,23 @@ bookingSchema.pre('save', async function (next) {
     // Generate QR code and NFC data for the ticket
     const qrCodeData = generateQRCodeData(this._id, this.user, this.trip);
     const nfcId = generateNFCId(this._id);
+    if(this.agent != null) {
+      const newTicket = await Ticket.create({
+        booking: this._id,
+        agent: this.agent,
+        trip: this.trip,
+        qrCodeData,
+        nfcId: card.nfcId,
+        validFrom: this.createdAt,
+        validUntil: calculateTicketExpiry(this.createdAt),
+      });
+  
+      // Associate the new ticket with this booking
+      this.ticket = newTicket._id;
+
+      return next();
+    }
+
 
     // Create the ticket
     const newTicket = await Ticket.create({

@@ -10,7 +10,11 @@ const ticketSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+  },
+
+  agent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Agent',
   },
   trip: {
     type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +27,6 @@ const ticketSchema = new mongoose.Schema({
   },
   nfcId: { // NFC ID associated with the ticket
     type: String,
-    required: true,
   },
   validFrom: {
     type: Date,
@@ -39,6 +42,13 @@ const ticketSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
+});
+
+ticketSchema.pre('validate', function (next) {
+  if ((!this.agent && !this.user) || (this.agent && this.user)) {
+    return next(new Error('Either agent or user must be present, but not both.'));
+  }
+  next();
 });
 
 // Transform _id to id for JSON responses

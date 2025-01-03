@@ -428,7 +428,7 @@ const tripTypes = gql`
 const bookingsTypes = gql`
   type Booking {
     id: ID!
-    user: User!
+    user: User
     trip: Trip!
     destination: String!
     numberOfTickets: Int!
@@ -438,6 +438,8 @@ const bookingsTypes = gql`
     status: String!
     ticket: Ticket  # Optional ticket field
     pos: PosMachine
+    agent: Agent
+    clientName: String
   }
 
   type Ticket {
@@ -446,7 +448,7 @@ const bookingsTypes = gql`
     user: User!
     trip: Trip!
     qrCodeData: String!
-    nfcId: String!
+    nfcId: String
     validFrom: String!
     validUntil: String!
   }
@@ -455,6 +457,7 @@ const bookingsTypes = gql`
     success: Boolean!
     message: String
     data: Booking
+    balance: Float
   }
 
   type BookingsResponse {
@@ -476,6 +479,14 @@ const bookingsTypes = gql`
   }
 
   type Mutation {
+    addAgentBooking(
+      tripId: ID!,
+      destination: String!,
+      numberOfTickets: Int!,
+      price: Float!,
+      clientName: String!
+      ): BookingResponse!
+    
     addBooking(
       tripId: ID!,
       destination: String!,
@@ -856,6 +867,7 @@ type AgentPayload {
   token: String
   agent: Agent
   message: String
+  refreshToken: String
 }
 
 type agentWalletResponse {
@@ -902,6 +914,7 @@ type Mutation {
   ): AgentPayload!
 
   deleteAgent(id: ID!): AuthPayload!
+  regenerateAgentToken(refreshToken: String!): AgentPayload!
 
   addTransaction(
     id: ID!
