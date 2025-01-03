@@ -889,7 +889,7 @@ type getAgentsResponse {
 }
 
 type Query {
-  getAgent(id: ID!): getAgentResponse!
+  getAgent(id: ID): getAgentResponse!
   getAgents: getAgentsResponse!
   getAgentWallet(id: ID!): AuthPayload!
 }
