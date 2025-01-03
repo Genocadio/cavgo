@@ -170,6 +170,13 @@ const bookingResolvers = {
             data: null
           };
         } else {
+          if(!destination) {
+            return {
+              success: false,
+              message: 'Destination is required',
+              data: null
+            };
+          }
           if (price > agent.wallet.balance) {
             return { success: false, message: 'Insufficient balance for agent' };
           }
@@ -201,14 +208,26 @@ const bookingResolvers = {
 
           const booking = new Booking({
             trip: trip._id,
-            destination,
+            destination: destination,
             status: 'Waiting Board',
             numberOfTickets,
             price,
             agent: agent.id,
             clientName
           });
-          const savedBooking = await booking.save();
+          let savedBooking = null;
+          try {
+            savedBooking = await booking.save();
+          } catch (err) {
+            tempagent.wallet.balance += price
+            await tempagent.save();
+            console.error('Error saving agentbooking:', err); // Log error
+            return {
+              success: false,
+              message: err.message || 'Error saving agentbooking',
+              data: null
+            };
+          }
           console.log('savedBooking:', savedBooking);
           return {
             success: true,
