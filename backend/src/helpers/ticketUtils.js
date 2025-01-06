@@ -32,8 +32,74 @@ function calculateTicketExpiry(startDate) {
   return expiryDate;
 }
 
+/**
+ * Generate a secure, self-checking ID based on a trip ID.
+ * @param {string} tripId - The trip ID to generate the unique number from.
+ * @returns {string} A secure, self-checking unique ID.
+ */
+function generateSecureId(tripId) {
+  if (!tripId || typeof tripId !== 'string') {
+    throw new Error('Invalid trip ID. It must be a non-empty string.');
+  }
+
+  // Step 1: Extract numeric equivalent of the trip ID
+  const numericTripId = tripId
+    .split('')
+    .map((char) => parseInt(char, 16)) // Convert hexadecimal or numeric characters
+    .filter((num) => !isNaN(num)); // Remove non-numeric characters
+
+  // Step 2: Generate a Luhn-compatible base number
+  const baseNumber = numericTripId.join('');
+  const checksum = calculateLuhnChecksum(baseNumber);
+
+  // Combine base number with checksum to create a valid Luhn number
+  const luhnNumber = baseNumber + checksum;
+
+  // Step 3: Multiply each digit of the Luhn number with the corresponding trip ID digit
+  const secureId = luhnNumber
+    .split('')
+    .map((digit, index) => {
+      const multiplier = numericTripId[index % numericTripId.length] || 1; // Cycle through trip ID digits
+      return (parseInt(digit) * multiplier).toString();
+    })
+    .join('');
+
+  // Return the secure ID
+  return secureId;
+}
+
+/**
+ * Calculate Luhn checksum for a number string.
+ * @param {string} number - The base number to calculate the checksum for.
+ * @returns {number} The Luhn checksum digit.
+ */
+function calculateLuhnChecksum(number) {
+  let sum = 0;
+  let isSecond = false;
+
+  // Process digits from right to left
+  for (let i = number.length - 1; i >= 0; i--) {
+    let digit = parseInt(number[i], 10);
+
+    if (isSecond) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+
+    sum += digit;
+    isSecond = !isSecond;
+  }
+
+  // Return the checksum digit
+  return (10 - (sum % 10)) % 10;
+}
+
+
+
 module.exports = {
   generateQRCodeData,
   generateNFCId,
   calculateTicketExpiry,
+  generateSecureId,
+
 };
