@@ -38,6 +38,7 @@ function calculateTicketExpiry(startDate) {
  * @returns {string} A secure, self-checking unique ID.
  */
 function generateSecureId(tripId) {
+  console.log("Trip to link in val" + tripId + typeof(tripId));
   if (!tripId || typeof tripId !== 'string') {
     throw new Error('Invalid trip ID. It must be a non-empty string.');
   }
