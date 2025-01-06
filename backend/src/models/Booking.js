@@ -74,7 +74,9 @@ bookingSchema.pre('save', async function (next) {
 
     const card = await Card.findOne( this.card )
     // Generate QR code and NFC data for the ticket
+    console.log("Trip to link" + this.trip)
     const qrCodeData = generateSecureId(this.trip);
+    
     const nfcId = generateNFCId(this._id);
     if(this.agent != null) {
       const newTicket = await Ticket.create({
