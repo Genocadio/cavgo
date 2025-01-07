@@ -36,37 +36,58 @@ function calculateTicketExpiry(startDate) {
  * Generate a secure, self-checking ID based on a trip ID.
  * @param {string} tripId - The trip ID to generate the unique number from.
  * @returns {string} A secure, self-checking unique ID.
+ * @throws {Error} If the trip ID is invalid.
  */
 function generateSecureId(tripId) {
-  console.log("Trip to link in val" + tripId + typeof(tripId));
+  console.log(`Trip to link in val: ${tripId} (type: ${typeof tripId})`);
+
+  // Validate the tripId input
   if (!tripId || typeof tripId !== 'string') {
     throw new Error('Invalid trip ID. It must be a non-empty string.');
   }
 
-  // Step 1: Extract numeric equivalent of the trip ID
+  // Extract numeric equivalent of the trip ID
   const numericTripId = tripId
     .split('')
-    .map((char) => parseInt(char, 16)) // Convert hexadecimal or numeric characters
-    .filter((num) => !isNaN(num)); // Remove non-numeric characters
+    .map((char) => parseInt(char, 16)) // Convert hexadecimal characters to numbers
+    .filter((num) => !isNaN(num)); // Remove invalid characters
 
-  // Step 2: Generate a Luhn-compatible base number
-  const baseNumber = numericTripId.join('');
-  const checksum = calculateLuhnChecksum(baseNumber);
+  if (numericTripId.length === 0) {
+    throw new Error('Trip ID contains no valid numeric or hexadecimal characters.');
+  }
 
-  // Combine base number with checksum to create a valid Luhn number
-  const luhnNumber = baseNumber + checksum;
+  // Calculate the sum of digits from tripId
+  const tripIdSum = numericTripId.reduce((sum, num) => sum + num, 0);
 
-  // Step 3: Multiply each digit of the Luhn number with the corresponding trip ID digit
-  const secureId = luhnNumber
-    .split('')
-    .map((digit, index) => {
-      const multiplier = numericTripId[index % numericTripId.length] || 1; // Cycle through trip ID digits
-      return (parseInt(digit) * multiplier).toString();
-    })
-    .join('');
+  if (tripIdSum === 0) {
+    throw new Error('Sum of digits from trip ID is zero, division is not possible.');
+  }
 
-  // Return the secure ID
+  // Generate a random Luhn-compatible number
+  const randomBaseNumber = generateRandomNumber(8); // Adjust length as needed
+  const checksum = calculateLuhnChecksum(randomBaseNumber);
+  const luhnNumber = randomBaseNumber + checksum;
+
+  // Divide the Luhn number by the sum of tripId digits
+  const dividedNumber = Math.floor(Number(luhnNumber) / tripIdSum);
+
+  // Add the sum of digits to the result
+  const secureId = `${dividedNumber}-${tripIdSum}`;
+
   return secureId;
+}
+
+/**
+ * Generate a random numeric string of the specified length.
+ * @param {number} length - Length of the random number to generate.
+ * @returns {string} Random numeric string.
+ */
+function generateRandomNumber(length) {
+  let randomNumber = '';
+  for (let i = 0; i < length; i++) {
+    randomNumber += Math.floor(Math.random() * 10); // Generate a random digit (0-9)
+  }
+  return randomNumber;
 }
 
 /**
@@ -94,6 +115,7 @@ function calculateLuhnChecksum(number) {
   // Return the checksum digit
   return (10 - (sum % 10)) % 10;
 }
+
 
 
 
