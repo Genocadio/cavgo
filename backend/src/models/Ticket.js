@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const generateQrCodeData = require('../helpers/qrcodegen')
 
 const ticketSchema = new mongoose.Schema({
   booking: {
@@ -42,6 +43,18 @@ const ticketSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
+});
+
+ticketSchema.pre('save', function (next) {
+  try {
+    // Ensure qrCodeData is only generated if it's missing or if fields affecting it are modified
+    if (this.isNew || this.isModified('booking') || this.isModified('user') || this.isModified('agent') || this.isModified('trip') || this.isModified('validFrom') || this.isModified('validUntil')) {
+      this.qrCodeData = generateQrCodeData(this);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 ticketSchema.pre('validate', function (next) {
