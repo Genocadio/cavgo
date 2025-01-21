@@ -314,7 +314,7 @@ const bookingResolvers = {
           destination,
           numberOfTickets,
           card: nfcId ? card._id : null,
-          pos: pos ? pos._id : null,
+          pos: pos ? pos.id : null,
           price
         });
 
