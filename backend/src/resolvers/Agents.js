@@ -8,8 +8,8 @@ const agentResolvers = {
         const agent = new Agent(agentData);
         await agent.save();
 
-        const token = agent.generateToken();
-        return { success: true, token, agent };
+        const { accessToken, refreshToken } = agent.generateToken();
+        return { success: true, token: accessToken, agent };
       } catch (err) {
         console.error('Error registering agent:', err);
         return { success: false, message: err.message || 'Error registering agent' };

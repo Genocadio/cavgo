@@ -931,6 +931,68 @@ type SuccessResponse {
 
 `
 
+const superUserTpes = gql `
+type SuperUser {
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phoneNumber: String
+  password: String!
+  userType: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type SuperUserResponse {
+  success: Boolean!
+  message: String
+  data: SuperUser
+}
+
+  type SuperUsersResponse {
+    success: Boolean!
+    message: String
+    data: [SuperUser!]!
+  }
+
+
+type SuperUserPayload {
+  success: Boolean!
+  message: String
+  token: String
+  superUser: SuperUser
+}
+
+type Query {
+  getSuperUser(id: ID!): SuperUsersResponse!
+  getSuperUsers: SuperUsersResponse!
+}
+
+type Mutation {
+  registerSuperUser(
+    firstName: String!
+    lastName: String!
+    email: String!
+    phoneNumber: String
+    password: String!
+  ): SuperUserPayload!
+
+  loginSuperUser(email: String!, password: String!): SuperUserPayload!
+
+  updateSuperUser(
+    id: ID!
+    firstName: String
+    lastName: String
+    email: String
+    phoneNumber: String
+  ): SuperUserResponse!
+
+  deleteSuperUser(id: ID!): SuperUserResponse!
+}
+
+`
+
 
 // Combine all the types and export them
 module.exports = {
@@ -949,5 +1011,6 @@ module.exports = {
   posMachineTypes,
   cardTypes,
   walletTypes,
-  AgentsTypes
+  AgentsTypes,
+  superUserTpes
 };

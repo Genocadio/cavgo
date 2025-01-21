@@ -13,6 +13,7 @@ const posResolvers = require('./PosMachine');
 const cardResolvers = require('./Cards');
 const walletResolvers = require('./wallet');
 const agentResolvers = require('./Agents');
+const superUserResolvers = require('./superUser')
 
 const resolvers = {
   Query: {
@@ -30,9 +31,9 @@ const resolvers = {
     ...posResolvers.Query,
     ...cardResolvers.Query,
     ...walletResolvers.Query,
-    ...agentResolvers.Query
-    
-
+    ...agentResolvers.Query,
+    ...superUserResolvers.Query
+  
   },
 
   Mutation: {
@@ -50,7 +51,8 @@ const resolvers = {
     ...posResolvers.Mutation,
     ...cardResolvers.Mutation,
     ...walletResolvers.Mutation,
-    ...agentResolvers.Mutation
+    ...agentResolvers.Mutation,
+    ...superUserResolvers.Mutation
   
   },
 

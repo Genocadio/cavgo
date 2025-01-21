@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const cors = require('cors');
-const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes, scheduleTypes, tripPresttypes, posMachineTypes, cardTypes, walletTypes, AgentsTypes } = require('./graphql/typeDefs');
+const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes, scheduleTypes, tripPresttypes, posMachineTypes, cardTypes, walletTypes, AgentsTypes, superUserTpes } = require('./graphql/typeDefs');
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger');
 const authenticate = require('./middlewares/authMiddleware');
@@ -35,7 +35,8 @@ const typeDefs = [
   posMachineTypes,
   cardTypes,
   walletTypes,
-  AgentsTypes
+  AgentsTypes,
+  superUserTpes
 ];
 
 // Connect to MongoDB

@@ -87,14 +87,14 @@ const bookingResolvers = {
     getBookings: async (_, { tripId }, context) => {
       try {
         // Optional: Check if user is authenticated, but we can still return all bookings
-        console.log('context', context);
-        if (!context.user && !context.pos) {
-          return {
-            success: false,
-            message: 'Unauthorized access',
-            data: null
-          };
-        }
+        // console.log('context', context);
+        // if (!context.user && !context.pos) {
+        //   return {
+        //     success: false,
+        //     message: 'Unauthorized access',
+        //     data: null
+        //   };
+        // }
 
         // Define the query object
         const query = tripId ? { trip: tripId } : {};
@@ -263,7 +263,7 @@ const bookingResolvers = {
             data: null
           };
         }
-        if (nfcId) {
+        if (nfcId && pos) {
           // If NFC ID is provided, get the user associated with the card
           card = await Card.findOne({ nfcId });
           if (!card) {
@@ -314,6 +314,7 @@ const bookingResolvers = {
           destination,
           numberOfTickets,
           card: nfcId ? card._id : null,
+          pos: pos ? pos._id : null,
           price
         });
 
@@ -537,7 +538,18 @@ const bookingResolvers = {
         console.error('Error in Booking pos resolver:', err); // Log error
         return null;
       }
-    }
+    },
+    card: async (booking) => {
+      try {
+        if (booking.card) {
+          return await Card.findById(booking.card);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error in Booking card resolver:', err); // Log error
+        return null;
+      }
+    },
   }
 };
 

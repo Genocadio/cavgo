@@ -14,6 +14,8 @@ function generateQrCodeData(ticket) {
     throw new Error('Either user or agent must be present, but not both.');
   }
 
+  console.log("qr code generating")
+
   // Construct payload
   const payload = {
     bookingId: ticket.booking.toString(),
@@ -36,7 +38,10 @@ function generateQrCodeData(ticket) {
   };
 
   // Return base64-encoded QR code data
-  return Buffer.from(JSON.stringify(qrCodeData)).toString('base64');
+  const data  = Buffer.from(JSON.stringify(qrCodeData)).toString('base64');
+  console.log("Data made :", data)
+
+  return data
 }
 
 module.exports = generateQrCodeData;
