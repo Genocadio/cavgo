@@ -531,7 +531,7 @@ const bookingResolvers = {
     pos: async function (booking) {
       try {
         if (booking.pos) {
-          return await PosMachine.findById(booking.pos);
+          return await PosMachine.findById(booking.pos).populate('linkedCar');
         }
         return null;
       } catch (err) {
