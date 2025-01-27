@@ -228,6 +228,7 @@ const bookingResolvers = {
               data: null
             };
           }
+          pubsub.publish('BOOKING_ADDED', { bookingAdded: savedBooking });
           console.log('savedBooking:', savedBooking);
           return {
             success: true,

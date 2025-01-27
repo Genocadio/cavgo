@@ -747,7 +747,7 @@ const cardTypes = gql`
   type CardsResponse {
     success: Boolean!
     message: String
-    data: [Card!]!
+    data: [Card]
   }
 
   type Query {

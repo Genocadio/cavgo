@@ -6,7 +6,7 @@ const cors = require('cors');
 const { userTypes, driverTypes, companyTypes, carTypes, locationTypes, routeTypes, tripTypes, basicQueryTypes, bookingsTypes, paymentTypes, scheduleTypes, tripPresttypes, posMachineTypes, cardTypes, walletTypes, AgentsTypes, superUserTpes } = require('./graphql/typeDefs');
 const resolvers = require('./resolvers/resolvers');
 const logger = require('./middlewares/logger');
-const authenticate = require('./middlewares/authMiddleware');
+const authenticate = require('./middlewares/authenticate');
 const authPos = require('./middlewares/posMiddleware');
 const authAgent = require('./middlewares/agentMiddleware');
 
@@ -99,15 +99,16 @@ async function startApolloServer() {
   app.use(requestLogger);
 
   app.use(authenticate);
-  app.use(authPos);
-  app.use(authAgent);
+  // app.use(authPos);
+  // app.use(authAgent);
   app.use(express.json());
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => {
       return {
         user: req.user,
         pos: req.pos,
-        agent: req.agent
+        agent: req.agent,
+        superUser: req.superUser
       };
     }
   }));

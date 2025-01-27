@@ -8,18 +8,19 @@ const cardResolvers = {
     getCards: async (_, __, context) => {
       try {
         const { user } = context; // Get the user from context
+        const { superUser } = context;
 
         // Ensure the user is authenticated
-        if (!user) {
+        if (!user && !superUser) {
           return { success: false, message: 'Unauthorized' };
         }
 
         // Only admins can fetch all cards
-        if (user.userType !== 'admin') {
+        if (user && !superUser && user.userType !== 'admin' ) {
           return { success: false, message: 'Permission denied' };
         }
 
-        const cards = await Card.find().populate('userId').populate('creatorId');
+        const cards = await Card.find().populate('user').populate('creator');
         return { success: true, data: cards };
       } catch (err) {
         console.error('Error fetching cards:', err);
@@ -33,9 +34,10 @@ const cardResolvers = {
         const { user } = context;
         const { pos} = context
         const { agent } = context
+        const { superUser } = context;
 
         // Ensure the user is authenticated
-        if (!user && !pos && !agent) {
+        if (!user && !pos && !agent && !superUser)  {
           return { success: false, message: 'Unauthorized' };
         }
 
