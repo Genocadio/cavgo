@@ -1,0 +1,15 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+combined.log
+errors.log
+
+# Environment files
+.env
+
+# Cache files
+*.cache
+*.tmp
