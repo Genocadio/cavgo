@@ -1,3 +1,0 @@
-MONGO_URI = "mongodb+srv://Cadioyves:Cadio@cavgotest.9yini.mongodb.net/?retryWrites=true&w=majority&appName=cavgotest"
-JWT_SECRET = "secret"
-JWT_REFRESH_SECRET = "refresh"
