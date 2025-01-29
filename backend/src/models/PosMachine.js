@@ -53,7 +53,7 @@ posMachineSchema.methods.generateToken = function() {
   const accessToken = jwt.sign(
     { id: this._id }, 
     process.env.JWT_SECRET, 
-    { expiresIn: '3m' } // Access token expires in 1 hour
+    { expiresIn: '3d' } // Access token expires in 1 hour
   );
 
   // Generate the refresh token with a long expiration time (e.g., 30 days)
