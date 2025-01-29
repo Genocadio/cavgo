@@ -3,6 +3,8 @@ const Car = require('../models/Car');              // Import the Car model
 const User = require('../models/User');            // Import the User model
 const { isNullableType } = require('graphql');
 const jwt = require('jsonwebtoken'); 
+const { PubSub, withFilter } = require('graphql-subscriptions');
+const pubsub = new PubSub();
 
 
 const posResolvers = {
@@ -40,6 +42,9 @@ const posResolvers = {
             data: null,
           };
         }
+        pubsub.publish('POS_COMMAND', {
+          posCommand: "location".concat(posMachine.id), // This command can be of varying types as per your logic
+        });
         return {
           success: true,
           message: 'POS machine fetched successfully',
@@ -187,26 +192,72 @@ const posResolvers = {
         };
       }
     },
+
+    updatePOsLocation: async(_, {latitude, longitude}, context) => {
+      try {
+        const { pos } = context
+        if (!pos) {
+          return {
+            success: false,
+            message: 'Unauthorized access',
+            data: null,
+          };
+        }
+        const posMachine = await PosMachine.findById(pos.id);
+        if (!posMachine) {
+          return {
+            success: false,
+            message: 'POS Machine not found',
+            data: null,
+          };
+        }
+        posMachine.latitude = latitude;
+        posMachine.longitude = longitude;
+        await posMachine.save();
+        return {
+          success: true,
+          message: 'POS Machine location updated successfully',
+          data: posMachine,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: `Error updating POS Machine location: ${error.message}`,
+          data: null,
+        };
+      }
+    },
     
+      
 
     // Update an existing POS Machine
     updatePosMachine: async (
         _,
-        { serialNumber, status, plateNumber }, // Only serialNumber, status, and plateNumber are received
-        { user } // Accessing user from context
+        { id, status, plateNumber,  }, // Only serialNumber, status, and plateNumber are received
+        context
       ) => {
         try {
           // Ensure user is authenticated
-          if (!user) {
+          const { user } = context;
+          const  { superUser } = context;
+          const { pos} = context;
+          if (!user && !superUser && !pos) {
             return {
               success: false,
-              message: 'User not authenticated',
+              message: 'Unauthorized access',
+              data: null,
+            };
+          }
+          if(user && user.userType !== 'admin') {
+            return {
+              success: false,
+              message: 'Unauthorized access',
               data: null,
             };
           }
       
           // Find the POS machine by serial number (since serial number won't change)
-          const posMachine = await PosMachine.findOne({ serialNumber })
+          const posMachine = await PosMachine.findById(id)
             .populate('linkedCar')
             .populate('user');
       
@@ -217,21 +268,28 @@ const posResolvers = {
               data: null,
             };
           }
-      
+          let car = null;
           // Find the car by plate number to link to the POS machine
-          const car = await Car.findOne({ plateNumber });
-          if (!car) {
-            return {
-              success: false,
-              message: 'Car not found',
-              data: null,
-            };
+          if (plateNumber!= null && plateNumber) {
+            car = await Car.findOne({ plateNumber });
+            if (!car) {
+              return {
+                success: false,
+                message: 'Car not found',
+                data: null,
+              };
+            }
+            posMachine.linkedCar = car._id;
           }
-      
+        
           // Update the POS machine with new status and linked car
-          posMachine.status = status;
-          posMachine.linkedCar = car._id;  // Update the linked car to the new car found by plate number
-          posMachine.user = user._id;      // Set the user from context
+          if(status != null && status){
+            posMachine.status = status;
+          }
+          if(user != null && user) {
+            posMachine.user = user.id;
+          }
+                // Set the user from context
           posMachine.assignedDate = new Date(); // Set the assigned date automatically
           posMachine.lastActivityDate = new Date(); // Set the last activity date automatically
       
@@ -252,6 +310,45 @@ const posResolvers = {
           };
         }
       },
+
+      commandPosMachine: async (_, {id, command}, context) => {
+        try {
+          const { superUser}  = context
+          if (!superUser) {
+            return {
+              success: false,
+              message: 'Unauthorized access',
+              data: null,
+            };
+
+          }
+          const posMachine = await PosMachine.findById(id);
+          if (!posMachine) {
+            return {
+              success: false,
+              message: 'POS Machine not found',
+              data: null,
+            };
+          }
+          pubsub.publish('POS_COMMAND', {
+            posCommand: {
+              command: command.concat(posMachine.id), // Ensure this is a string value
+            }
+          });
+          return {
+            success: true,
+            message: 'POS machine command sent successfully',
+            data: null,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            message: `Error updating POS machine: ${error.message}`,
+            data: null,
+          };
+        }
+    },
+
       
 
     // Delete a POS Machine
@@ -280,6 +377,18 @@ const posResolvers = {
       }
     },
   },
+
+  Subscription: {
+    posCommand: {
+      subscribe: withFilter(() => pubsub.asyncIterator(['POS_COMMAND']),
+      (payload, variables) => {
+        const { id } = variables;
+        return payload.posCommand.command.includes(id);
+      }),
+    }
+  },
+  
+  
   PosMachine: {
     user: async (posMachine) => {
         if (posMachine.user) {

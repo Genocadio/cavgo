@@ -14,6 +14,7 @@ const cardResolvers = require('./Cards');
 const walletResolvers = require('./wallet');
 const agentResolvers = require('./Agents');
 const superUserResolvers = require('./superUser')
+const phonePaymentResolvers = require('./MomoPayments');
 
 const resolvers = {
   Query: {
@@ -52,12 +53,14 @@ const resolvers = {
     ...cardResolvers.Mutation,
     ...walletResolvers.Mutation,
     ...agentResolvers.Mutation,
-    ...superUserResolvers.Mutation
+    ...superUserResolvers.Mutation,
+    ...phonePaymentResolvers.Mutation
   
   },
 
   Subscription: {
     ...bookingResolvers.Subscription,
+    ...posResolvers.Subscription
   },
 
   Driver: driverResolvers.Driver,

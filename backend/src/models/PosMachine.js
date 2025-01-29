@@ -10,6 +10,14 @@ const posMachineSchema = new mongoose.Schema({
   lastActivityDate: { type: Date }, // For tracking usage or last operation
   password: { type: String, required: true }, // Password for the POS machine
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to the User who owns the POS machine
+  
+  // Location tracking fields
+  lastLocation: {
+    latitude: { type: Number, required: false }, // Latitude of the POS machine's last known location
+    longitude: { type: Number, required: false }, // Longitude of the POS machine's last known location
+    lastLocationUpdate: { type: Date, required: false } // Timestamp when the location was last updated
+  }
+
 }, {
   timestamps: true, // Automatically add createdAt and updatedAt fields
 });
@@ -58,7 +66,6 @@ posMachineSchema.methods.generateToken = function() {
   // Return both tokens
   return { accessToken, refreshToken };
 };
-
 
 // Transform the `_id` to `id` in JSON output
 posMachineSchema.set('toJSON', {

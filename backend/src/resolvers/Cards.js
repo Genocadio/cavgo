@@ -151,17 +151,18 @@ const cardResolvers = {
   
 
     // Update an existing card
-    updateCard: async (_, { id, nfcId, userId }, context) => {
+    updateCard: async (_, { id, nfcId, userId, active }, context) => {
       try {
         const { user } = context;
+        const { superUser} = context
 
         // Ensure the user is authenticated
-        if (!user) {
+        if (!user && !superUser) {
           return { success: false, message: 'Unauthorized' };
         }
 
         // Only admins can update cards
-        if (user.userType !== 'admin') {
+        if (user && user.userType !== 'admin') {
           return { success: false, message: 'Permission denied' };
         }
 
@@ -172,6 +173,7 @@ const cardResolvers = {
 
         if (nfcId) card.nfcId = nfcId;
         if (userId) card.user = userId;
+        if (active !== undefined) card.active = active;
 
         await card.save();
         return { success: true, data: card };

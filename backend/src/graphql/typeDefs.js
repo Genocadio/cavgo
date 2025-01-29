@@ -677,16 +677,28 @@ const tripPresttypes = gql`
 
 const posMachineTypes = gql`
   type PosMachine {
-    id: ID!
-    serialNumber: String!
-    status: String!
-    linkedCar: Car
-    assignedDate: String
-    lastActivityDate: String
-    user: User!
-    createdAt: String!
-    updatedAt: String!
-  }
+  id: ID!
+  serialNumber: String!
+  status: String!
+  linkedCar: Car
+  assignedDate: String
+  lastActivityDate: String
+  user: User!
+  createdAt: String!
+  updatedAt: String!
+  
+  # Location tracking fields
+  lastLocation: LastLocation
+}
+
+# Define the LastLocation type
+type LastLocation {
+  latitude: Float
+  longitude: Float
+  lastLocationUpdate: String
+}
+
+    
 
   type PosMachineResponse {
     success: Boolean!
@@ -706,6 +718,9 @@ const posMachineTypes = gql`
     getPosMachine(id: ID!): PosMachineResponse!
     getPosMachines: PosMachineListResponse!
   }
+    type PosCommandResponse {
+    command: String!
+}
 
   type Mutation {
     registerPosMachine(
@@ -715,13 +730,25 @@ const posMachineTypes = gql`
     ): PosMachineResponse!
 
     updatePosMachine(
-      serialNumber: String,
+      id: ID!,
       status: String,
       plateNumber: String,
     ): PosMachineResponse!
 
+    updatePOsLocation(
+    latitude: Float,
+    longitude: Float,
+    ): PosMachineResponse!
+
+    commandPosMachine(id: ID!, command: String!): PosMachineResponse!
+
     deletePosMachine(id: ID!): PosMachineResponse!
     regeneratePosToken(refreshToken: String!): PosMachineResponse!
+    
+  }
+  
+  type Subscription {
+    posCommand(id: ID!): PosCommandResponse!
     
   }
 `;
@@ -772,7 +799,8 @@ const cardTypes = gql`
     updateCard(
       id: ID!,
       nfcId: String,
-      userId: ID
+      userId: ID,
+      active: Boolean
     ): CardResponse!
 
     # Delete a card
@@ -790,7 +818,7 @@ const walletTypes = gql`
     type: String!          # Type of transaction: 'credit' or 'debit'
     amount: Float!         # Amount of the transaction
     description: String    # Description of the transaction (optional)
-    date: DateTime!        # Timestamp of the transaction
+    date: String!        # Timestamp of the transaction
   }
 
   # Wallet type definition
@@ -800,8 +828,8 @@ const walletTypes = gql`
     card: Card !            # Optional: Linked card for the wallet
     balance: Float!        # Current balance in the wallet
     transactions: [WalletTransaction!]! # List of transactions in the wallet
-    createdAt: DateTime!   # Wallet creation timestamp
-    updatedAt: DateTime!   # Wallet last updated timestamp
+    createdAt: String!   # Wallet creation timestamp
+    updatedAt: String!   # Wallet last updated timestamp
   }
 
   # Response types
@@ -993,6 +1021,57 @@ type Mutation {
 
 `
 
+const phonePaymentTypes = gql`
+  type PhonePayment {
+    id: ID!
+    user: User
+    agent: Agent
+    booking: Booking
+    phoneNumber: String!
+    amount: Float!
+    reason: String!
+    transactionId: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type PhonePaymentResponse {
+    success: Boolean!
+    message: String
+    data: PhonePayment
+  }
+
+  type PhonePaymentListResponse {
+    success: Boolean!
+    message: String
+    data: [PhonePayment!]
+  }
+
+  type Query {
+    getPhonePayment(id: ID!): PhonePaymentResponse!
+    getPhonePayments: PhonePaymentListResponse!
+  }
+
+  type Mutation {
+    createPhonePayment(
+      phoneNumber: String!,
+      reason: String!,
+      bookingId: ID,
+      amount: Float,
+
+    ): PhonePaymentResponse!
+
+    createWithdraw(
+      phoneNumber: String,
+      reason: String,
+      amount: Float
+    ): PhonePaymentResponse!
+
+    deletePhonePayment(id: ID!): PhonePaymentResponse!
+  }
+`;
+
+
 
 // Combine all the types and export them
 module.exports = {
@@ -1012,5 +1091,6 @@ module.exports = {
   cardTypes,
   walletTypes,
   AgentsTypes,
-  superUserTpes
+  superUserTpes,
+  phonePaymentTypes
 };

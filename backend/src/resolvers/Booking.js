@@ -353,7 +353,7 @@ const bookingResolvers = {
         }
 
 
-        startPaymentCheckTimer(booking._id);
+        // startPaymentCheckTimer(booking._id);
 
         console.log('Booking created successfully:', booking); // Log successful booking creation
         pubsub.publish('BOOKING_ADDED', { bookingAdded: booking });

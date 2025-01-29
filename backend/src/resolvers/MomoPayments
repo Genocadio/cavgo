@@ -1,0 +1,187 @@
+const PhonePayment = require('../models/MoMOTransactions');
+const Booking = require('../models/Booking');
+const User = require('../models/User');
+const Agent = require('../models/Agents');
+const { requestDeposit, requestpayment } = require('../helpers/MomoPAy');
+// const requestDeposit = require('../helpers/MomoPAy')
+
+const phonePaymentResolvers = {
+  Query: {
+    getPayments: async (_, __, context) => {
+      try {
+        const { user } = context; // Get the user from context
+        const { superuser } = context
+
+        if ((!user && !superuser) || (user && user.usertype !== !admin)) {
+          return { success: false, message: 'Unauthorized' };
+        }
+
+        // Fetch all phone payments
+        const payments = await PhonePayment.find().populate('userId').populate('agentId').populate('bookingId');
+
+        return { success: true, data: payments };
+      } catch (err) {
+        console.error('Error fetching payments:', err);
+        return { success: false, message: err.message || 'Error fetching payments' };
+      }
+    },
+
+    getPayment: async (_, { id }, context) => {
+      try {
+        const { user } = context; // Get the user from context
+
+        if (!user) {
+          return { success: false, message: 'Unauthorized' };
+        }
+
+        // Fetch a specific phone payment by ID
+
+        const payment = await PhonePayment.findById(id).populate('userId').populate('agentId').populate('bookingId');
+
+        if (!payment) {
+          return { success: false, message: 'Payment not found' };
+        }
+
+        return { success: true, data: payment };
+      } catch (err) {
+        console.error('Error fetching payment:', err);
+        return { success: false, message: err.message || 'Error fetching payment' };
+      }
+    },
+  },
+
+  Mutation: {
+    createPhonePayment: async (_, { phoneNumber, reason, bookingId, amount }, context) => {
+      try {
+        const { user } = context; // Get the user from context
+        let userId = null;
+
+        if (!user) {
+          return { success: false, message: 'Unauthorized' };
+        }
+
+        userId = user.id;
+
+
+        // Ensure the user is creating a deposit (either userId or bookingId should be provided)
+        if (!userId && !bookingId) {
+          return { success: false, message: 'Either userId or bookingId must be provided' };
+        }
+        console.log("Booking ID: ", bookingId)
+        let booking = null
+
+        if (bookingId) {
+          booking = await Booking.findById(bookingId);
+          if (!booking) {
+            return { success: false, message: 'Booking not found' };
+          }
+          console.log("Booking: ", booking)
+          amount = booking.price
+        }
+
+        console.log("Amount: ", amount, typeof(amount), "PhoneNumber", phoneNumber)
+        const payNow = await requestpayment(phoneNumber, Number(amount))
+        if (payNow.success && payNow.status === "Pending") {
+          if (phoneNumber.startsWith("250")) {
+            phoneNumber = phoneNumber.slice(2); // Remove the first two characters
+          }
+          console.log("Phone Number: ", phoneNumber)
+
+          reason = reason.concat(payNow.transactionid)
+  
+          const phonePaymentData = {
+            phoneNumber,
+            reason,
+            amount,
+            user: userId || null,
+            booking: bookingId || null,
+            agent: null, // Agent is not provided for deposits
+          };
+  
+          const phonePayment = new PhonePayment(phonePaymentData);
+          await phonePayment.save();
+          return { success: true, data: phonePayment };
+          
+        }
+        console.log("Payment: ", payNow)
+        return { success: false, message: payNow.response.msg || 'Error creating payment' };
+       
+
+        
+      } catch (err) {
+        console.error('Error creating deposit:', err);
+        return { success: false, message: err.message || 'Error creating deposit' };
+      }
+    },
+
+    createWithdraw: async (_, { phoneNumber, reason, amount, agentId }, context) => {
+      try {
+        const { user } = context; // Get the user from context
+
+        if (!user) {
+          return { success: false, message: 'Unauthorized' };
+        }
+
+        // Ensure the user is creating a withdraw (agentId must be provided)
+        if (!agentId) {
+          return { success: false, message: 'AgentId must be provided for withdrawal' };
+        }
+
+        const phonePaymentData = {
+          phoneNumber,
+          reason,
+          amount,
+          agentId,
+          userId: null, // User is not provided for withdrawals
+          bookingId: null, // No bookingId for withdrawal
+        };
+
+        const phonePayment = new PhonePayment(phonePaymentData);
+        await phonePayment.save();
+
+        return { success: true, data: phonePayment };
+      } catch (err) {
+        console.error('Error creating withdraw:', err);
+        return { success: false, message: err.message || 'Error creating withdraw' };
+      }
+    },
+  },
+
+  PhonePayment: {
+    bookingId: async (payment) => {
+      try {
+        if (payment.bookingId) {
+          return await Booking.findById(payment.bookingId);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error fetching booking:', err);
+        return null;
+      }
+    },
+    userId: async (payment) => {
+      try {
+        if (payment.userId) {
+          return await User.findById(payment.userId);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        return null;
+      }
+    },
+    agentId: async (payment) => {
+      try {
+        if (payment.agentId) {
+          return await Agent.findById(payment.agentId);
+        }
+        return null;
+      } catch (err) {
+        console.error('Error fetching agent:', err);
+        return null;
+      }
+    },
+  },
+};
+
+module.exports = phonePaymentResolvers;
